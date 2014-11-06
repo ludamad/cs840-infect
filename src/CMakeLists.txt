@@ -7,6 +7,10 @@ include_directories(
     libs/UnitTest++
 )
 
+add_definitions(
+	-std=c++11
+)
+
 aux_source_directory("." infectsim_src) 
 aux_source_directory("hashkat-utils" infectsim_src) 
 aux_source_directory("hashkat-utils/mersenne-simd" infectsim_src) 
