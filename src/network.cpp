@@ -34,30 +34,53 @@ void State::init(const Settings& S) {
 	vector<double> interests(S.size, 0);
 	for (int y = 0; y < rows; y++) {
 		for (int x = 0; x < rows; x++) {
-			int dist = max(abs(y%50 - 25), abs(x % 50 - 25));
-			dist = max(dist, 1);
-			interests[y*rows+x] = 1.0 / pow(dist, 0.75);
+			interests[y*rows+x] = rng.rand_real_not0() / 5;
 		}
 	}
+#define FOR_ID(x, y, A) \
+	for (int y = 0; y < rows; y++) \
+		for (int x = 0, A = y * rows; x < rows; x++, A++)
 
 	if (true) {
-		// How far away to effect?
-		int Sx = 1, Sy = 1;
-		for (int y = 0; y < rows; y++) {
-			for (int x = 0; x < rows; x++) {
-				entity_id A = y*rows+x; // Connect from this entity
-				for (int sy = 0; sy <= Sy; sy++) {
-					for (int sx = 0; sx <= Sx; sx++) {
-						int nx = (x+sx) % rows, ny = (y+sy)%rows;
-						// This ensures everyone is connected to their neighbours, once it has completed.
-						if (sx != 0 || sy != 0) {
-							entity_id id = ny*rows+nx;
-							biconnect(A, id, interests[id] / 10 /max(sx, sy));
-						}
+		FOR_ID(x, y, A) {
+			// How far away to effect?
+			double SxD = 3, SyD = 3;
+			for (int i = 0; i < 10; i++) {
+				SxD += rng.rand_real_with01();
+				SyD += rng.rand_real_with01();
+				if (rng.random_chance(0.5)) {
+					break;
+				}
+			}
+			int Sx = (int)SxD, Sy = (int)SyD;
+			double popularity = rng.rand_real_not0();
+			int n_squares = (1+2*Sx) * (1+ 2 * Sy) - 1;
+			for (int sy = -Sy; sy <= Sy; sy++) {
+				for (int sx = -Sx; sx <= Sx; sx++) {
+					int nx = (x+rows+sx) % rows, ny = (y+rows+sy)%rows;
+					// This ensures everyone is connected to their neighbours, once it has completed.
+					if (sx != 0 || sy != 0) {
+						entity_id id = ny*rows+nx;
+						connect(A, id, popularity / n_squares / 40);
 					}
 				}
 			}
 		}
+//		FOR_ID(x, y, A) {
+//			set<entity_id> used;
+//			double popularity = 1.0;
+//			double connections = 0;
+//			if (rng.random_chance(0.001)) {
+//				connections = 10;
+//			}
+//			for (int i = 0; i < connections; i++) {
+//				int B = rng.rand_int(S.size);
+//				if (A != B && used.find(B) == used.end()) {
+//					connect(A, B, popularity * interests[B]);
+//					used.insert(B);
+//				}
+//			}
+//		}
 	}
 
 	if (false) {
@@ -193,4 +216,16 @@ entity_id State::generate_potential_infection() {
 //	fflush(stdout);
 	Entity& e = entities.at(infector_id);
 	return e.pick_influence(rng);
+}
+
+void State::fast_reset(Settings& S) {
+    active_infections.init(S.size);
+    printf("Creating network of size %d\n", S.size);
+    time_elapsed = 0;
+    n_steps = 0, n_infections = 0;
+    halflife = S.halflife;
+    time_interval_overage = 0;
+    for (Entity& e : entities) {
+    	e.infected = false;
+    }
 }

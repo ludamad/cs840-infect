@@ -1,6 +1,6 @@
 #include <cstdlib>
 #include "SDL/SDL.h"
-#include <SDL/SDL_ttf.h>
+#include "SDL/SDL_ttf.h"
 #include <string>
 #include <map>
 #include <time.h>

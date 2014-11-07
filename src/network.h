@@ -93,7 +93,7 @@ struct State {
     	return entities.at(id);
     }
     double current_timestep();
-
+    void fast_reset(Settings& S);
     double time_interval_overage = -1;
     double halflife = -1;
     // Hack to store extra result from generate_potential_infection:

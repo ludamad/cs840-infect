@@ -64,14 +64,16 @@ void output_network(string label, int dim, State& network) {
 
 int main(int argn, char** args) {
     run_unittests();
-    int dim = 900, n_start = 100;
+    int dim = 900, n_start = 10000;
     time_t seed;
     time(&seed);
     Settings settings(dim*dim, 1, seed, 0.01);
     State network;
     // Create the network according to passed settings
     network.init(settings);
-    network.infect_n_random(n_start);
+    restart:
+	network.fast_reset(settings);
+    network.infect_n_random(100);
 	output_network("Initial Conditions", dim, network);
     sdl_delay(100);
     double min_time = 600, max_weight = 1e-32;
@@ -84,7 +86,7 @@ int main(int argn, char** args) {
     	}
 		double last_time = network.time_elapsed;
 		// Draw after every millisecond of simulation:
-		while (network.time_elapsed < last_time + 10) {
+		while (network.time_elapsed < last_time + 1000) {
 			network.step();
 			if (step == step_milestone) {
 				printf("Simulated step %d, time %.2f\n", step, network.time_elapsed);
@@ -101,8 +103,9 @@ int main(int argn, char** args) {
 		output_network(ss.str(), dim, network);
     }
     while (true) {
-		sdl_delay(10);
 		output_network("Simulation Complete", dim, network);
+		sdl_delay(100);
+		goto restart;
     }
 	return 0;
 }
