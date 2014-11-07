@@ -11,18 +11,6 @@ using namespace std;
 static TTF_Font *font;
 static SDL_Surface *screen = NULL;
 
-static map<string, SDL_Surface*> __text_cache;
-
-SDL_Surface* __get_text_surface(const string& s) {
-	auto siter = __text_cache.find(s);
-	if (siter != __text_cache.end()) {
-		return siter->second;
-	}
-	SDL_Colour col = {0x00, 0x00, 0x00};
-	__text_cache[s] = TTF_RenderText_Solid(font, s.c_str(), col);
-	return __text_cache[s];
-}
-
 void sdl_init(int width, int height) {
 	SDL_Init( SDL_INIT_EVERYTHING);
 
@@ -50,7 +38,7 @@ void sdl_init(int width, int height) {
 }
 
 void sdl_draw_text(const string& text, int x, int y) {
-	SDL_Colour col = {0x00, 0x66, 0x00};
+	SDL_Colour col = {0x00, 0x00, 0x00};
 	SDL_Surface* surface  = TTF_RenderText_Solid(font, text.c_str(), col);
 	SDL_Rect target_rect = surface->clip_rect;
 	target_rect.x = x, target_rect.y = y;

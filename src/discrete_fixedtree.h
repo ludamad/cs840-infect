@@ -30,6 +30,7 @@ struct DiscreteFixedTree {
 	}
 
 	void insert(int i, double weight) {
+		weight *= decay_factor;
 		DFTNode* N = &nodes[i];
 		double delta_weight = (weight - N->total_weight);
 		N->total_weight = weight;
@@ -43,19 +44,23 @@ struct DiscreteFixedTree {
 	}
 
 	int random_select(MTwist& rng) {
-		ASSERT(total_weight() > 0.0, "Can't do random select with 0 weight!");
+		DEBUG_CHECK(total_weight() > 0.0, "Can't do random select with 0 weight!");
 		// Note: The root node is located at 'size'
 		double r = rng.rand_real_not1() * nodes[size].total_weight;
 		return random_select(r, size);
 	}
 
-	void decay(double multiplier) {
-		for (DFTNode& node : nodes) {
-			node.total_weight *= multiplier;
+	void scale(double multiplier) {
+		decay_factor /= multiplier;
+		if (decay_factor > 1.0e250) {
+			for (auto& node : nodes) {
+				node.total_weight /= decay_factor;
+			}
+			decay_factor = 1.0;
 		}
 	}
 	double total_weight() {
-		return nodes[size].total_weight;
+		return nodes[size].total_weight / decay_factor;
 	}
 private:
 	int random_select(double r, int node_id) {
@@ -85,6 +90,7 @@ private:
 		nodes[id].parent_id = parent;
 		return id;
 	}
+	double decay_factor = 1.0;
 	size_t size = 0;
 	std::vector<DFTNode> nodes;
 };

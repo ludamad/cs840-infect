@@ -108,10 +108,11 @@ struct State {
 };
 
 struct Settings {
-    Settings(size_t size, double halflife, int seed) {
+    Settings(size_t size, double halflife, int seed, double transmission_prob) {
     	this->size = size;
     	this->halflife = halflife;
     	this->seed = seed;
+    	this->transmission_prob = transmission_prob;
     }
     size_t size;
     double halflife;

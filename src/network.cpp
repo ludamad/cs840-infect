@@ -67,31 +67,57 @@ void State::init(const Settings& S) {
 static double DECAY_MIN_INTERVAL = 0.01005033585350145;
 static double DECAY_MULTIPLIER = 0.99;
 static double TIME_SUM_CORRECTION = 1.0/1.0005000833332613;
+static double C1 = DECAY_MIN_INTERVAL * TIME_SUM_CORRECTION;
+static double C2 = 1.0 / C1;
+
+// Inverse operation of current_timestep below. Used in below constants calculation.
+static double inv_current_timestep(double dt) {
+	return (1 / dt) * C1;
+}
+static double DECAY_MIN_INTERVAL_WEIGHT = inv_current_timestep(DECAY_MIN_INTERVAL);
 
 double State::current_timestep() {
-	return DECAY_MIN_INTERVAL * TIME_SUM_CORRECTION / active_infections.total_weight();
+	return 1 / active_infections.total_weight() * C2;
+}
+
+// After down-adjusting the timestep, is the resulting step have no change to the graph?
+static bool test_if_null_step(MTwist& rng, double weight, double* delta_time) {
+	*delta_time = DECAY_MIN_INTERVAL;
+	double r = rng.rand_real_not0() * DECAY_MIN_INTERVAL_WEIGHT;
+	return (r > weight);
 }
 
 void State::step() {
-	// We employ the rejection method globally for simplicity.
+	entity_id infected_id; // declared here to satisfy 'goto' constraints
+
+	// TODO: Revise this comment
+	// We employ the rejection method throughout for simplicity.
 	// If a generated event fails to meet a constraint, we can simply restart the whole process.
 	// This allows simpler weight calculations as we can use weights oblivious to the constraint.
-	// We use this for the constraint of not repeatedly infecting the same individual.
+
 	double delta_time = current_timestep();
+	if (delta_time > DECAY_MIN_INTERVAL) {
+		// Will down-adjust delta time to be DECAY_MIN_INTERVAL
+		// To compensate, check if the adjusted action should be result in nothing happening.
+		if (test_if_null_step(rng, active_infections.total_weight(), &delta_time)) {
+			goto afterinfection;
+		}
+	}
 
 	// Find the event that occurs (an infection)
 	// NOTE: It may *seem* like we should employ the rejection method here,
 	// but that would invalidate our timestep logic.
 	// Since the timestep is overestimated with respect to invalid infections,
 	// we simply do nothing but step time if a valid infection does not occur.
-	entity_id infected_id = generate_potential_infection();
+	infected_id = generate_potential_infection();
 	try_infection(infected_id);
 
+	afterinfection:
 	n_steps++;
 	// Pass time:
 	time_interval_overage += delta_time;
 	while (time_interval_overage > DECAY_MIN_INTERVAL) {
-		active_infections.decay(DECAY_MULTIPLIER);
+		active_infections.scale(DECAY_MULTIPLIER);
 		time_interval_overage -= DECAY_MIN_INTERVAL;
 	}
 	time_elapsed += delta_time;
@@ -101,7 +127,7 @@ bool State::try_infection(entity_id infected_id) {
 	if (e.infected) {
 		return false;
 	}
-	printf("INFECTING (%d) -> (%d)\n", this->last_infector, infected_id);
+//	printf("INFECTING (%d) -> (%d)\n", this->last_infector, infected_id);
 	e.infected = true;
 	active_infections.insert(infected_id, e.transmission_total);
 	n_infections++;
