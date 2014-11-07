@@ -40,9 +40,9 @@ typedef DiscreteFixedTree InfectionSet;
 
 struct Entity {
 	entity_id pick_influence(MTwist& rng) {
-		entity_id pick; // == int
+		entity_id pick = -1; // == int
 		weighted_picker.sample(rng, &pick, 1);
-		return influence_set[pick];
+		return influence_set.at(pick);
 	}
 
 	// Note: infection is idempotent.

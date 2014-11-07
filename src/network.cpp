@@ -1,17 +1,18 @@
 #include <cmath>
 #include "network.h"
+#include <set>
 
 using namespace std;
 
 void State::connect(entity_id A, entity_id B, double transmission_prob) {
+	if (A == B) {
+		return;
+	}
 	get(A).connect(B, transmission_prob);
 
 }
 
 void State::biconnect(entity_id A, entity_id B, double transmission_prob) {
-	if (A == B) {
-		return;
-	}
 	connect(A, B, transmission_prob);
 	connect(B, A, transmission_prob);
 }
@@ -29,34 +30,73 @@ void State::init(const Settings& S) {
 
 	int rows = sqrt(S.size);
 	ASSERT(rows*rows == S.size, "Only dealing with square graphs for now!");
+
+	vector<double> interests(S.size, 0);
 	for (int y = 0; y < rows; y++) {
 		for (int x = 0; x < rows; x++) {
-			int nx = (x+1) % rows, ny = (y+1)%rows;
-			entity_id A = y*rows+x; // Connect from this entity
-			// This ensures everyone is connected to their neighbours, once it has completed.
-			biconnect(A, y*rows+nx, S.transmission_prob);
-			biconnect(A, ny*rows+x, S.transmission_prob);
-			biconnect(A, ny*rows+nx, S.transmission_prob);
+			int dist = max(abs(y%50 - 25), abs(x % 50 - 25));
+			dist = max(dist, 1);
+			interests[y*rows+x] = 1.0 / pow(dist, 0.75);
 		}
 	}
 
-//	// Create the connectivity graph:
-//	for (Entity& e : entities) {
-//		std::vector<entity_id> influence_set;
-//		std::vector<double> transmission_probs;
-//		for (entity_id e_id = 0; e_id < size(); e_id++) {
-//			if (&e != &entities[e_id]) {
-//				// For every node other than ourselves, connect with 'connectivity' probability
-//				if (rng.rand_real_not1() < S.connectivity) {
-//					influence_set.push_back(e_id);
-//					transmission_probs.push_back(S.transmission_prob);
-//				}
-//			}
-//		}
-//		e = Entity(influence_set, transmission_probs);
-//	}
+	if (true) {
+		// How far away to effect?
+		int Sx = 1, Sy = 1;
+		for (int y = 0; y < rows; y++) {
+			for (int x = 0; x < rows; x++) {
+				entity_id A = y*rows+x; // Connect from this entity
+				for (int sy = 0; sy <= Sy; sy++) {
+					for (int sx = 0; sx <= Sx; sx++) {
+						int nx = (x+sx) % rows, ny = (y+sy)%rows;
+						// This ensures everyone is connected to their neighbours, once it has completed.
+						if (sx != 0 || sy != 0) {
+							entity_id id = ny*rows+nx;
+							biconnect(A, id, interests[id] / 10 /max(sx, sy));
+						}
+					}
+				}
+			}
+		}
+	}
 
+	if (false) {
+		for (int y = 0; y < rows; y++) {
+			for (int x = 0; x < rows; x++) {
+				set<entity_id> used;
+				entity_id A = y*rows+x; // Connect from this entity
+
+				double popularity = 0.0075;
+				double connections = 10;
+				if (rng.random_chance(0.01)) {
+					popularity = 0.005;
+					connections = 100;
+				}
+
+				for (int i = 0; i < connections; i++) {
+		//				int sx = rng.rand_int(-10, 11) + rng.rand_int(-10, 11) + rng.rand_int(-10, 11);
+		//				int sy = rng.rand_int(-10, 11) + rng.rand_int(-10, 11) + rng.rand_int(-10, 11);
+					int sx = rng.rand_int(-10, 11);
+					int sy = rng.rand_int(-10, 11);
+					int nx = (x+sx+rows) % rows, ny = (y+sy+rows)%rows;
+					if (sx != 0 || sy != 0) {
+						int id = ny*rows+nx;
+						if (used.find(id) == used.end()) {
+							connect(A, id, popularity * interests[id]);///max(abs(sx), abs(sy)));
+							used.insert(id);
+						}
+					}
+				}
+		}
+		}
+	}
+
+	int milestone = 1;
 	for (int i = 0; i < entities.size(); i++) {
+		if (i == milestone) {
+			printf("Preprocessed %d entities\n", i);
+			milestone *= 2;
+		}
 		entities[i].preprocess();
 	}
 }
@@ -64,7 +104,8 @@ void State::init(const Settings& S) {
 // Carefully picked to form a PDF
 // DECAY_MIN_INTERVAL: Essentially a dynamic sampling frequency
 // Smaller means more accuracy but slower time progression.
-static double DECAY_MIN_INTERVAL = 0.01005033585350145;
+static const double HALFLIFE = 60;
+static double DECAY_MIN_INTERVAL = 0.01005033585350145 * HALFLIFE;
 static double DECAY_MULTIPLIER = 0.99;
 static double TIME_SUM_CORRECTION = 1.0/1.0005000833332613;
 static double C1 = DECAY_MIN_INTERVAL * TIME_SUM_CORRECTION;

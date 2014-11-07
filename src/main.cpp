@@ -26,7 +26,7 @@ void output_network(string label, int dim, State& network) {
 	static unsigned int COL_RED2 = 0xFF990000;
 	static unsigned int COL_ORANGE = 0xFFFF9900;
 
-	double scale = 640.0 / dim;
+	double scale = 900 / dim;
 	if (!SDL_INITIALIZED) {
 		wasInfected.resize(network.size(), false);
 		sdl_init(scale * dim, scale * dim);
@@ -64,30 +64,34 @@ void output_network(string label, int dim, State& network) {
 
 int main(int argn, char** args) {
     run_unittests();
-    int dim = 1000, n_start = 50;
+    int dim = 900, n_start = 100;
     time_t seed;
     time(&seed);
     Settings settings(dim*dim, 1, seed, 0.01);
     State network;
     // Create the network according to passed settings
     network.init(settings);
-    for (int i = 0; i < n_start; i++) {
-		sdl_delay(10);
-		network.infect_n_random(1);
-		stringstream ss;
-		ss << i;
-		output_network("Seeding Infection #" + ss.str(), dim, network);
-    }
-    double min_time = 600, max_weight = 1e-6;
+    network.infect_n_random(n_start);
+	output_network("Initial Conditions", dim, network);
+    sdl_delay(100);
+    double min_time = 600, max_weight = 1e-32;
+    int step = 0;
+    int step_milestone = 1;
     while (true) {
+		sdl_delay(0);
     	if (network.time_elapsed >= min_time && network.active_infections.total_weight() <= max_weight) {
     		break; // Done
     	}
-		sdl_delay(10);
 		double last_time = network.time_elapsed;
 		// Draw after every millisecond of simulation:
 		while (network.time_elapsed < last_time + 10) {
 			network.step();
+			if (step == step_milestone) {
+				printf("Simulated step %d, time %.2f\n", step, network.time_elapsed);
+				step_milestone *= 2;
+				break;
+			}
+			step++;
 		}
 		stringstream ss("Simulation ");
 		ss << "W = " << network.active_infections.total_weight() << endl;
@@ -96,7 +100,7 @@ int main(int argn, char** args) {
 		ss << "infections: " << network.n_infections;
 		output_network(ss.str(), dim, network);
     }
-    for (int i = 0; i < 1000; i++) {
+    while (true) {
 		sdl_delay(10);
 		output_network("Simulation Complete", dim, network);
     }

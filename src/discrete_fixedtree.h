@@ -52,7 +52,7 @@ struct DiscreteFixedTree {
 
 	void scale(double multiplier) {
 		decay_factor /= multiplier;
-		if (decay_factor > 1.0e250) {
+		if (decay_factor > 1.0e100) {
 			for (auto& node : nodes) {
 				node.total_weight /= decay_factor;
 			}
