@@ -24,15 +24,13 @@ void sdl_init(int width, int height) {
    // Initialize SDL_ttf library
    if (TTF_Init() != 0) {
       SDL_Quit();
-      exit(1);
    }
 
    // Load a font
-   font = TTF_OpenFont("FreeSans.ttf", 24);
+   font = TTF_OpenFont("src/FreeSans.ttf", 24);
    if (font == NULL) {
       TTF_Quit();
       SDL_Quit();
-      exit(1);
    }
 
 }
@@ -47,7 +45,7 @@ void sdl_draw_text(const string& text, int x, int y) {
 }
 
 void sdl_fill_rect(int x, int y, int w, int h, unsigned int colour) {
-	SDL_Rect rect = {x, y, w, h};
+	SDL_Rect rect {(Sint16)x, (Sint16)y, (Uint16)w, (Uint16)h};
 	SDL_FillRect(screen, &rect, colour);
 }
 

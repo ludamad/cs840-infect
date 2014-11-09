@@ -3,6 +3,13 @@
 
 #include <string>
 
+const unsigned int COL_BLACK = 0;
+const unsigned int COL_WHITE = 0xFFFFFFFF;
+const unsigned int COL_GREY = 0xFF666699;
+const unsigned int COL_RED1 = 0xFFFF0000;
+const unsigned int COL_RED2 = 0xFF990000;
+const unsigned int COL_ORANGE = 0xFFFF9900;
+
 void sdl_init(int width, int height);
 void sdl_draw_text(const std::string& text, int x, int y);
 void sdl_fill_rect(int x, int y, int w, int h, unsigned int colour);

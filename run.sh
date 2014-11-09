@@ -1,7 +1,7 @@
 #!/bin/bash
 set +x
-mkdir -p build/ 
-cd build 
+
+ROOTDIR="$(pwd)"
 
 args="$@" # Create a mutable copy of the program arguments
 function handle_flag(){
@@ -21,10 +21,28 @@ function handle_flag(){
     return $got # False!
 }
 
+function runit() {
+    cd "$ROOTDIR"
+    prog=build/$RELEASETYPE/infectsim
+    if [ $RELEASETYPE = debug ] ; then
+        gdb -silent -ex=r -ex=q --args $prog $args 
+    elif true || handle_flag "-C" || handle_flag "--color" ; then
+        unbuffer $prog $args | util/colorify.sh
+    else
+        $prog $args
+    fi
+}
 
-if handle_flag "-O" ; then
-    cmake -DCMAKE_BUILD_TYPE=Release ../src
+if handle_flag "--debug" || handle_flag "--gdb" || handle_flag "-g" ; then
+    RELEASETYPE='debug'
+    mkdir -p build/debug 
+    cd build/debug
+    cmake -DCMAKE_BUILD_TYPE=Debug ../../src
 else
-    cmake -DCMAKE_BUILD_TYPE=Debug ../src
+    RELEASETYPE='release'
+    mkdir -p build/release
+    cd build/release
+    cmake -DCMAKE_BUILD_TYPE=Release ../../src
 fi
-make -j5 && cd ../src && gdb -silent -ex=r -ex=q ../build/infectsim
+
+make -j5 && runit

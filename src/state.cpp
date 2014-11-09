@@ -1,48 +1,39 @@
 #include <cmath>
-#include "network.h"
 #include <set>
+
+#include "libs/perf_timer.h"
+
+#include "state.h"
 
 using namespace std;
 
 void State::connect(entity_id A, entity_id B, double transmission_prob) {
+	PERF_TIMER();
 	if (A == B) {
 		return;
 	}
 	get(A).connect(B, transmission_prob);
-
 }
 
-void State::biconnect(entity_id A, entity_id B, double transmission_prob) {
-	connect(A, B, transmission_prob);
-	connect(B, A, transmission_prob);
-}
-
-void State::init(const Settings& S) {
-	// Make our infection structure aware of the maximum amount of nodes:
-	active_infections.init(S.size);
-	rng.init_genrand(S.seed);
-	entities.resize(S.size);
-	printf("Creating network of size %d\n", S.size);
-	time_elapsed = 0;
-	n_steps = 0, n_infections = 0;
-	halflife = S.halflife;
-	time_interval_overage = 0;
-
-	int rows = sqrt(S.size);
-	ASSERT(rows*rows == S.size, "Only dealing with square graphs for now!");
-
-	vector<double> interests(S.size, 0);
+void State::generate_graph() {
+	int size = entities.size();
+	int rows = sqrt(size);
+	ASSERT(rows*rows == size, "Logic error");
+	vector<double> interests(size, 0);
 	for (int y = 0; y < rows; y++) {
 		for (int x = 0; x < rows; x++) {
-			interests[y*rows+x] = rng.rand_real_not0() / 5;
+			interests[y*rows+x] = rng.rand_real_not0();
 		}
 	}
 #define FOR_ID(x, y, A) \
 	for (int y = 0; y < rows; y++) \
 		for (int x = 0, A = y * rows; x < rows; x++, A++)
 
+	printf("CONNECTING ENTITIES\n");
 	if (true) {
+		MilestoneRep rep;
 		FOR_ID(x, y, A) {
+			rep.report("Connected %d entities");
 			// How far away to effect?
 			double SxD = 3, SyD = 3;
 			for (int i = 0; i < 10; i++) {
@@ -61,7 +52,7 @@ void State::init(const Settings& S) {
 					// This ensures everyone is connected to their neighbours, once it has completed.
 					if (sx != 0 || sy != 0) {
 						entity_id id = ny*rows+nx;
-						connect(A, id, popularity / n_squares / 40);
+						connect(A, id, popularity / n_squares / 30);
 					}
 				}
 			}
@@ -114,14 +105,25 @@ void State::init(const Settings& S) {
 		}
 	}
 
-	int milestone = 1;
+	printf("PREPROCESSING ENTITIES\n");
+	MilestoneRep rep;
 	for (int i = 0; i < entities.size(); i++) {
-		if (i == milestone) {
-			printf("Preprocessed %d entities\n", i);
-			milestone *= 2;
-		}
+		rep.report("Preprocessed %d entities");
+		PERF_TIMER2("walker method preprocess");
 		entities[i].preprocess();
 	}
+}
+
+void State::init(const Config& C) {
+	PERF_TIMER();
+	// Make our infection structure aware of the maximum amount of nodes:
+	active_infections.init(C.size);
+	rng.init_genrand(C.seed);
+	entities.resize(C.size);
+	time_elapsed = 0;
+	n_steps = 0, n_infections = 0;
+	halflife = C.halflife;
+	time_interval_overage = 0;
 }
 
 // Carefully picked to form a PDF
@@ -152,6 +154,8 @@ static bool test_if_null_step(MTwist& rng, double weight, double* delta_time) {
 }
 
 void State::step() {
+	PERF_TIMER();
+
 	entity_id infected_id; // declared here to satisfy 'goto' constraints
 
 	// TODO: Revise this comment
@@ -187,13 +191,13 @@ void State::step() {
 	time_elapsed += delta_time;
 }
 bool State::try_infection(entity_id infected_id) {
-		Entity& e = entities[infected_id];
+        Entity& e = entities[infected_id];
 	if (e.infected) {
 		return false;
 	}
 //	printf("INFECTING (%d) -> (%d)\n", this->last_infector, infected_id);
 	e.infected = true;
-	active_infections.insert(infected_id, e.transmission_total);
+	active_infections.insert(infected_id, e.transmission_prob_total);
 	n_infections++;
 	// We have found a valid action
 	return true;
@@ -210,6 +214,7 @@ void State::infect_n_random(int n) {
 }
 
 entity_id State::generate_potential_infection() {
+	PERF_TIMER();
 	entity_id infector_id = active_infections.random_select(rng);
 	this->last_infector = infector_id;
 //	printf("Infector = %d\n", infector_id);
@@ -218,9 +223,8 @@ entity_id State::generate_potential_infection() {
 	return e.pick_influence(rng);
 }
 
-void State::fast_reset(Settings& S) {
+void State::fast_reset(Config& S) {
     active_infections.init(S.size);
-    printf("Creating network of size %d\n", S.size);
     time_elapsed = 0;
     n_steps = 0, n_infections = 0;
     halflife = S.halflife;

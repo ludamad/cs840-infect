@@ -5,13 +5,13 @@
 #include "discrete_fixedtree.h"
 #include "discrete_searchtree.h"
 
-#include "network.h"
+#include "state.h"
 
 #include "libs/StatCalc.h"
 
 const int TEST_SIZE = 1024;
 const int TEST_SAMPLES = 1000;
-const int INCREMENT = TEST_SIZE / 100;
+const int INCREMENT = TEST_SIZE;// / 100;
 const double SCALE_FACTOR = (TEST_SIZE) / double(TEST_SAMPLES) / 2.0;
 
 static int permutei(int i) {
@@ -41,7 +41,6 @@ TEST(walker_method_empirical) {
 	}
 	e.preprocess(); }
 
-	printf("Picking %d numbers\n", N *M);
 	std::vector<int> pick_count(N, 0);
 	for (int i = 0; i < N * M; i++) {
 		int p;
@@ -81,7 +80,6 @@ static void test_discrete_choice_structure() {
 		j = permutei(j);
 	}
 
-	printf("Picking %d numbers\n", N *M);
 	std::vector<int> pick_count(N, 0);
 	for (int i = 0; i < N * M; i++) {
 		int p = tree.random_select(rng);

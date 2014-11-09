@@ -5,6 +5,7 @@
 #include "libs/mtwist.h"
 
 #include "libs/perf_timer.h"
+#include "libs/DataReadWrite.h"
 
 // An effective scheme for 'decay' is to, instead of effecting all current elements
 // we simply scale UP elements inserted from that point forth.

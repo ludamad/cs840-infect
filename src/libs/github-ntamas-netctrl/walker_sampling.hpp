@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "../mtwist.h"
+#include "../DataReadWrite.h"
 
 /**
  * Efficient random sampling with replacement using Walker's alias method.
@@ -32,6 +33,9 @@ private:
     std::vector<double> m_probs;
 
 public:
+    READ_WRITE(rw) {
+    	rw << m_indexes << m_probs;
+    }
 
     /**
      * Constructs a new, uninitialized sampler.

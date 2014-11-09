@@ -46,7 +46,7 @@ struct PProfile {
 };
 
 void PerfTimer::print_results() {
-	printf("**** START PERFORMANCE STATS ****\n");
+//	printf("**** START PERFORMANCE STATS ****\n");
 	std::vector<PProfile> sorted_perfs;
 	MethodPerfProfileMap::iterator prof_iter = perf_map.begin();
 	for (; prof_iter != perf_map.end(); ++prof_iter) {
@@ -75,7 +75,7 @@ void PerfTimer::print_results() {
 				avg, max,
 				stddev, stddev_percentage);
 	}
-	printf("**** END PERFORMANCE STATS ****\n");
+//	printf("**** END PERFORMANCE STATS ****\n");
 }
 
 double PerfTimer::average_time(const char* method) {

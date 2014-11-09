@@ -8,6 +8,7 @@
 #ifndef LCOMMON_PERF_TIMER_H_
 #define LCOMMON_PERF_TIMER_H_
 
+#include <cstring>
 #include <cstdio>
 
 // Define a cross-platform function name identifier
@@ -43,10 +44,14 @@ struct PerfUnit {
         perf_timer_clear();
     }
     ~PerfUnit() {
-    	printf("-------------- RESULTS FOR %s -----------------\n", unitname);
+    	printf("-------------- %s -----------------\n", unitname);
     	perf_print_results();
         perf_timer_clear();
-    	printf("-------------- END RESULTS FOR %s -------------\n", unitname);
+    	printf("-----------------");
+    	for (int i = 0; i < strlen(unitname); i++) {
+    		printf("-");
+    	}
+    	printf("----------------\n", unitname);
     }
 private:
     const char* unitname;
