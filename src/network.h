@@ -9,8 +9,6 @@
 
 #include "discrete_fixedtree.h"
 
-typedef int entity_id;
-
 /*****************************************************************************
  * InfectionSet: The structure that holds the 'active contagions'.
  * This structure provides efficient operations for storing

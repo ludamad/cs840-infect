@@ -18,15 +18,15 @@ struct DFTNode {
 // Guarantees O(log N) operations very trivially
 // where N is the _maximum_ size of the universe.
 struct DiscreteFixedTree {
-	DiscreteFixedTree() {
-	}
 	void init(int n) {
 		// Easy thanks to vector value-copy semantics:
 		*this = DiscreteFixedTree(n);
 	}
-	DiscreteFixedTree(int n) : size(n), nodes(n) {
-		int root_id = _init_node(DFTNotExists, 0, n);
-		ASSERT(root_id == size, "Root problem! Should be right after weights.");
+	DiscreteFixedTree(int n = 0) : size(n), nodes(n) {
+		if (n > 0) {
+			int root_id = _init_node(DFTNotExists, 0, n);
+			ASSERT(root_id == size, "Root problem! Should be right after weights.");
+		}
 	}
 
 	void insert(int i, double weight) {

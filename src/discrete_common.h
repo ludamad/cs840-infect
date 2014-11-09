@@ -38,4 +38,6 @@ struct weight_t {
 	double val; // val <= 1.00
 };
 
+typedef int entity_id;
+
 #endif /* DISCRETE_COMMON_H_ */
