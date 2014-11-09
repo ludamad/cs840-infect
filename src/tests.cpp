@@ -74,7 +74,7 @@ static void test_discrete_choice_structure() {
 	const int M = TEST_SAMPLES;
 
 	// Test the average results of applying our distribution algorithm for entity connection relationships.
-	T tree(N*2);
+	T tree(N*10);
 	int j = 17;
 	for (int i = 0; i < N; i++) {
 		tree.insert(j, j);

@@ -11,16 +11,12 @@
 struct DSTNode {
     double weight;
     entity_id entity;
+    // Note: Not responsible for deleting children at all.
     DSTNode* lchild = NULL;
     DSTNode* rchild = NULL;
-
-    DSTNode(entity_id e, double w) {
+    DSTNode(entity_id e = -1, double w = -1) {
         entity = e;
         weight = w;
-    }
-    ~DSTNode() {
-        delete lchild;
-        delete rchild;
     }
 
     entity_id random_select(double r) {
@@ -40,28 +36,23 @@ struct DSTNode {
     	if (root == NULL) {
     		return child;
     	}
-    	double rw = root->weight;
-    	double ll = w(root->lchild), lr = w(root->rchild), cw = child->weight;
-    	double cW = ll + lr + cw;
-
-    	if (ll < lr)  {
-    		if (rw > cW || ll + cw >= lr) {
-    			root->lchild = insert(root->lchild, child);
-    			root->weight += cw;
-    		} else {
-    			child->lchild = root;
-				child->weight += rw;
-				root = child;
-    		}
+    	ASSERT(child->lchild == NULL && child->rchild == NULL, "Nontrivial insert!");
+    	double lW = w(root->lchild), rW = w(root->rchild);
+    	double ww = root->weight - lW - rW;
+    	if (child->weight > ww) {
+    		// Swap who-is-who:
+    		std::swap(root->lchild, child->lchild);
+    		std::swap(root->rchild, child->rchild);
+    		child->weight += root->weight;
+    		root->weight = ww;
+    		std::swap(root, child);
     	} else {
-    		if (rw > cW || lr + cw >= ll) {
-				root->rchild = insert(root->rchild, child);
-				root->weight += cw;
-			} else {
-    			child->rchild = root;
-    			child->weight += rw;
-				root = child;
-			}
+    		root->weight += child->weight;
+    	}
+    	if (lW > rW) {
+    		root->rchild = insert(root->rchild, child);
+    	} else {
+    		root->lchild = insert(root->lchild, child);
     	}
     	return root;
     }
@@ -89,21 +80,19 @@ struct DSTNode {
 
 struct DiscreteSearchTree {
     DiscreteSearchTree(int max_size = 0) {
-        // max_size not used currently
-    }
-    ~DiscreteSearchTree() {
-        delete root;
+    	buffer.resize(max_size);
     }
     void init(int max_size = 0) {
-        // max_size not used currently
-        delete root;
-        root = NULL;
+    	*this = DiscreteSearchTree(max_size);
     }
 
     void insert(entity_id entity, double weight) {
     	PERF_TIMER();
-    	root = DSTNode::insert(root, new DSTNode(entity, weight));
-//    	root->assert_relation();
+    	DSTNode* node = &buffer[last_used++];
+    	node->entity = entity;
+    	node->weight = weight;
+    	root = DSTNode::insert(root, node);
+    	root->assert_relation();
     }
 
     entity_id random_select(MTwist& rng) {
@@ -133,6 +122,8 @@ struct DiscreteSearchTree {
     }
 private:
     double decay_factor = 1.0;
+    std::vector<DSTNode> buffer;
+    int last_used = 0;
     DSTNode* root = NULL;
 };
 

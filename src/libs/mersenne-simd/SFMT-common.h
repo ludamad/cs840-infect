@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-#include "../../hashkat-utils/mersenne-simd/SFMT.h"
+#include "SFMT.h"
 
 inline static void do_recursion(w128_t * r, w128_t * a, w128_t * b,
 				w128_t * c, w128_t * d);

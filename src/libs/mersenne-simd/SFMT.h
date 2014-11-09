@@ -65,7 +65,7 @@ extern "C" {
   #endif
 #endif
 
-#include "../../hashkat-utils/mersenne-simd/SFMT-params.h"
+#include "SFMT-params.h"
 
 /*------------------------------------------
   128-bit SIMD like data type for standard C

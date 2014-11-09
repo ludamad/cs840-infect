@@ -4,8 +4,8 @@
 #include <cmath>
 #include <string>
 
-#include "hashkat-utils/mtwist.h"
-#include "github-ntamas-netctrl/walker_sampling.hpp"
+#include "libs/mtwist.h"
+#include "libs/github-ntamas-netctrl/walker_sampling.hpp"
 
 #include "discrete_fixedtree.h"
 

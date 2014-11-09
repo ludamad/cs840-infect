@@ -2,7 +2,7 @@
 #define DISCRETE_COMMON_H_
 
 #include <cstdio>
-#include "hashkat-utils/mtwist.h"
+#include "libs/mtwist.h"
 
 #include "libs/perf_timer.h"
 

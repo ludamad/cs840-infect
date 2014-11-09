@@ -47,6 +47,7 @@
 #include <vector>
 
 #include "customassert.h"
+#include "perf_timer.h"
 #include "mersenne-simd/SFMT.h"
 
 // Mersenne twister random number generator
@@ -94,6 +95,7 @@ public:
 
     /* Grab an integer from 0 to max, non-inclusive (ie appropriate for array lengths). */
     int rand_int(int max) {
+    	PERF_TIMER();
         //AD: Modified to remove modulo-bias problem. Inspired by Java's nextInt implementation.
         int raw = genrand_int31();
 

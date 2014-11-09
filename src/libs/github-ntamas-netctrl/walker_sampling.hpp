@@ -8,7 +8,7 @@
 #include <numeric>
 #include <vector>
 
-#include "../hashkat-utils/mtwist.h"
+#include "../mtwist.h"
 
 /**
  * Efficient random sampling with replacement using Walker's alias method.

@@ -1,4 +1,3 @@
-#pragma once
 #ifndef SFMT_PARAMS_H
 #define SFMT_PARAMS_H
 
@@ -67,25 +66,25 @@
 */
 
 #if SFMT_MEXP == 607
-  #include "../../hashkat-utils/mersenne-simd/SFMT-params607.h"
+  #include "SMFT-params607.h"
 #elif SFMT_MEXP == 1279
-  #include "../../hashkat-utils/mersenne-simd/SFMT-params1279.h"
+  #include "SMFT-params1279.h"
 #elif SFMT_MEXP == 2281
-  #include "../../hashkat-utils/mersenne-simd/SFMT-params2281.h"
+  #include "SMFT-params2281.h"
 #elif SFMT_MEXP == 4253
-  #include "../../hashkat-utils/mersenne-simd/SFMT-params4253.h"
+  #include "SMFT-params4253.h"
 #elif SFMT_MEXP == 11213
-  #include "../../hashkat-utils/mersenne-simd/SFMT-params11213.h"
+  #include "SMFT-params11213.h"
 #elif SFMT_MEXP == 19937
-  #include "../../hashkat-utils/mersenne-simd/SFMT-params19937.h"
+  #include "SFMT-params19937.h"
 #elif SFMT_MEXP == 44497
-  #include "../../hashkat-utils/mersenne-simd/SFMT-params44497.h"
+  #include "SMFT-params44497.h"
 #elif SFMT_MEXP == 86243
-  #include "../../hashkat-utils/mersenne-simd/SFMT-params86243.h"
+  #include "SMFT-params86243.h"
 #elif SFMT_MEXP == 132049
-  #include "../../hashkat-utils/mersenne-simd/SFMT-params132049.h"
+  #include "SMFT-params132049.h"
 #elif SFMT_MEXP == 216091
-  #include "../../hashkat-utils/mersenne-simd/SFMT-params216091.h"
+  #include "SMFT-params216091.h"
 #else
 #if defined(__GNUC__) && !defined(__ICC)
   #error "SFMT_MEXP is not valid."

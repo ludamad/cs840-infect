@@ -4,7 +4,7 @@
 #include <cmath>
 #include <vector>
 
-#include "hashkat-utils/customassert.h"
+#include "libs/customassert.h"
 #include "discrete_common.h"
 
 const int DFTNotExists = -1;

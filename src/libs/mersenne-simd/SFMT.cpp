@@ -23,9 +23,9 @@ extern "C" {
 
 #include <string.h>
 #include <assert.h>
-#include "../../hashkat-utils/mersenne-simd/SFMT.h"
-#include "../../hashkat-utils/mersenne-simd/SFMT-params.h"
-#include "../../hashkat-utils/mersenne-simd/SFMT-common.h"
+#include "SFMT.h"
+#include "SFMT-params.h"
+#include "SFMT-common.h"
 
 #if defined(__BIG_ENDIAN__) && !defined(__amd64) && !defined(BIG_ENDIAN64)
 #define BIG_ENDIAN64 1
@@ -58,12 +58,12 @@ inline static void swap(w128_t *array, int size);
 #endif
 
 #if defined(HAVE_ALTIVEC)
-  #include "../../hashkat-utils/mersenne-simd/SFMT-alti.h"
+  #include "SMFT-alti.h"
 #elif defined(HAVE_SSE2)
   #if defined(_MSC_VER)
-    #include "../../hashkat-utils/mersenne-simd/SFMT-sse2-msc.h"
+    #include "SMFT-sse2-msc.h"
   #else
-    #include "../../hashkat-utils/mersenne-simd/SFMT-sse2.h"
+#include "SFMT-sse2.h"
   #endif
 #endif
 

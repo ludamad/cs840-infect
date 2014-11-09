@@ -1,4 +1,3 @@
-#pragma once
 /**
  * @file  SFMT-sse2.h
  * @brief SIMD oriented Fast Mersenne Twister(SFMT) for Intel SSE2
