@@ -21,3 +21,4 @@ aux_source_directory("hashkat-utils/mersenne-simd" infectsim_src)
 add_executable(infectsim ${infectsim_src})
 
 target_link_libraries(infectsim UnitTest++ ${SDL_LIBRARY} ${SDL_TTF_LIBRARY})
+

@@ -69,8 +69,7 @@ public:
      * \param  n   the number of samples to draw
      * \param  it  an output iterator to write the results to.
      */
-    template <typename OutputIterator>
-    void sample(MTwist& rng, OutputIterator it, size_t n=1) const;
+    size_t sample(MTwist& rng) const;
 };
 
 
@@ -116,18 +115,12 @@ void WalkerSampling::initialize(InputIterator begin, InputIterator end) {
     }
 }
 
-template <typename OutputIterator>
-void WalkerSampling::sample(MTwist& rng, OutputIterator it, size_t n) const {
-    double u;
-    int j;
+inline size_t WalkerSampling::sample(MTwist& rng) const {
     size_t m = m_probs.size();
 
-    while (n > 0) {
-        u = rng.rand_real_not1();
-        j = rng.rand_int(m);
-        *it = (u < m_probs[j]) ? j : m_indexes[j];
-        n--; ++it;
-    }
+	double u = rng.rand_real_not1();
+	int j = rng.rand_int(m);
+	return (u < m_probs[j]) ? j : m_indexes[j];
 }
 
 #endif       // _WALKER_SAMPLING_HPP

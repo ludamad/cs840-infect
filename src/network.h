@@ -38,8 +38,7 @@ typedef DiscreteFixedTree InfectionSet;
 
 struct Entity {
 	entity_id pick_influence(MTwist& rng) {
-		entity_id pick = -1; // == int
-		weighted_picker.sample(rng, &pick, 1);
+		entity_id pick = weighted_picker.sample(rng);
 		return influence_set.at(pick);
 	}
 

@@ -30,6 +30,7 @@ struct DiscreteFixedTree {
 	}
 
 	void insert(int i, double weight) {
+		PERF_TIMER();
 		weight *= decay_factor;
 		DFTNode* N = &nodes[i];
 		double delta_weight = (weight - N->total_weight);
@@ -44,6 +45,7 @@ struct DiscreteFixedTree {
 	}
 
 	int random_select(MTwist& rng) {
+		PERF_TIMER();
 		DEBUG_CHECK(total_weight() > 0.0, "Can't do random select with 0 weight!");
 		// Note: The root node is located at 'size'
 		double r = rng.rand_real_not1() * nodes[size].total_weight;

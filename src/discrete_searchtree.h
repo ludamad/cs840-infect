@@ -10,27 +10,22 @@
 // Only used in DiscreteSplayTree
 struct DSTNode {
     double weight;
+    double original;
+    double expected;
     entity_id entity;
+    DSTNode* lchild = NULL;
+    DSTNode* rchild = NULL;
+
     DSTNode(entity_id e, double w) {
         entity = e;
         weight = w;
+        original = w;
+        expected = w;
     }
     ~DSTNode() {
         delete lchild;
         delete rchild;
     }
-    DSTNode* get_left() { return lchild; }
-    DSTNode* get_right() { return rchild; }
-    void set_left(DSTNode* node) {
-    	double wl = w(lchild);
-        weight += w(node) - wl;
-        rchild = node;
-    }
-    void set_right(DSTNode* node) {
-		double wr = w(rchild);
-		weight += w(node) - wr;
-		lchild = node;
-	}
 
     entity_id random_select(double r) {
         DEBUG_CHECK(r > 0 && r < weight, "Bad random value!");
@@ -50,49 +45,36 @@ struct DSTNode {
     		return child;
     	}
     	double rw = root->weight;
-    	double lw = w(root->lchild), lr = w(root->rchild), cw = child->weight;
-    	double cW = lw + lr + cw;
+    	double ll = w(root->lchild), lr = w(root->rchild), cw = child->weight;
+    	double cW = ll + lr + cw;
+    	double expectedWeight = root->weight + cw;
 
-    	if (lw < lr)  {
-    		if (lw + cw >= lr) {
+    	if (ll < lr)  {
+    		if (rw > cW || ll + cw >= lr) {
     			root->lchild = insert(root->lchild, child);
-    			root->weight += child->weight;
-    		} else if (rw < cW) {
-    			child->lchild = insert(root->lchild, root);
-    			child->weight = child->lchild->weight;
-    			root = child;
+    			root->weight += cw;
+    		} else {
+    			child->lchild = root;
+				child->weight += rw;
+				root = child;
     		}
     	} else {
-    		if (lw + cw >= lr) {
-				root->lchild = insert(root->lchild, child);
-				root->weight += child->weight;
-			} else if (rw < cW) {
-    			child->set_right(insert(root->rchild, root));
-    			child->weight = child->rchild->weight;
+    		if (rw > cW || lr + cw >= ll) {
+				root->rchild = insert(root->rchild, child);
+				root->weight += cw;
+			} else {
+    			child->rchild = root;
+    			child->weight += rw;
 				root = child;
 			}
     	}
+    	root->expected = expectedWeight;
     	return root;
     }
-    DSTNode* insert(DSTNode* child) {
-    	DSTNode* root = this;
-    	double oldw = weight;
-    	double lw = w(lchild), lr = w(rchild);
-    	if (lw < lr) {
-    		if (oldw < lw + lr + w) {
-    			root->lchild = insert(lchild, root);
-    			root = child;
-    		}
 
-    	} else {
-
-    	}
-    	return root;
-    }
-    double sole_weight() {
-        return weight - w(lchild) - w(rchild);
-    }
     void assert_relation() {
+    	ASSERT(this != lchild, "Loop!");
+    	ASSERT(this != rchild, "Loop!");
     	double wsum = 0;
     	if (lchild) {
     		wsum += w(lchild);
@@ -102,14 +84,13 @@ struct DSTNode {
     		wsum += w(rchild);
     		rchild->assert_relation();
     	}
-    	ASSERT(weight >= wsum, "Relation broken!");
+    	ASSERT(fabs(weight - wsum - original) < 0.001, "Relation 1 broken!");
+    	ASSERT(fabs(weight - expected) < 0.001, "Relation 2 broken!");
     }
-private:
+
     static double w(DSTNode* node) {
         return node == NULL ? 0 : node->weight;
     }
-    DSTNode* lchild = NULL;
-    DSTNode* rchild = NULL;
 };
 
 struct DiscreteSearchTree {
@@ -126,28 +107,13 @@ struct DiscreteSearchTree {
     }
 
     void insert(entity_id entity, double weight) {
-        auto* N = new DSTNode(entity, weight);
-        if (root == NULL) {
-        	root = N;
-        	return;
-        }
-        root->assert_relation();
-        auto* nodeL = node->get_left(), *nodeR = node->get_right();
-        double leftw = nodeL == NULL ? 0 : nodeL->weight;
-        double rightw = nodeR == NULL ? 0 : nodeR->weight;
-        // If we add this weight to our left subtree, will it continue to meet our constraint?
-        if (weight + leftw < rightw) {
-            N->set_left(nodeL);
-            node->set_left(NULL);
-        } else {
-            N->set_right(nodeR);
-            node->set_right(NULL);
-        }
-        root = N;
-        root->assert_relation();
+    	PERF_TIMER();
+    	root = DSTNode::insert(root, new DSTNode(entity, weight));
+    	root->assert_relation();
     }
 
     entity_id random_select(MTwist& rng) {
+    	PERF_TIMER();
         ASSERT(root != NULL && total_weight() > 0.0, "Can't do random select with 0 weight!");
         return root->random_select(rng.rand_real_not1() * total_weight());
     }
@@ -157,8 +123,8 @@ struct DiscreteSearchTree {
             return;
         }
         node->weight *= multiplier;
-        scale(node->get_left(), multiplier);
-        scale(node->get_right(), multiplier);
+        scale(node->lchild, multiplier);
+        scale(node->rchild, multiplier);
     }
 
     void scale(double multiplier) {

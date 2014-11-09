@@ -4,6 +4,8 @@
 #include <cstdio>
 #include "hashkat-utils/mtwist.h"
 
+#include "libs/perf_timer.h"
+
 // An effective scheme for 'decay' is to, instead of effecting all current elements
 // we simply scale UP elements inserted from that point forth.
 // To effectively store
