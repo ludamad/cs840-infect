@@ -10,8 +10,6 @@
 // Only used in DiscreteSplayTree
 struct DSTNode {
     double weight;
-    double original;
-    double expected;
     entity_id entity;
     DSTNode* lchild = NULL;
     DSTNode* rchild = NULL;
@@ -19,8 +17,6 @@ struct DSTNode {
     DSTNode(entity_id e, double w) {
         entity = e;
         weight = w;
-        original = w;
-        expected = w;
     }
     ~DSTNode() {
         delete lchild;
@@ -47,7 +43,6 @@ struct DSTNode {
     	double rw = root->weight;
     	double ll = w(root->lchild), lr = w(root->rchild), cw = child->weight;
     	double cW = ll + lr + cw;
-    	double expectedWeight = root->weight + cw;
 
     	if (ll < lr)  {
     		if (rw > cW || ll + cw >= lr) {
@@ -68,7 +63,6 @@ struct DSTNode {
 				root = child;
 			}
     	}
-    	root->expected = expectedWeight;
     	return root;
     }
 
@@ -84,8 +78,8 @@ struct DSTNode {
     		wsum += w(rchild);
     		rchild->assert_relation();
     	}
-    	ASSERT(fabs(weight - wsum - original) < 0.001, "Relation 1 broken!");
-    	ASSERT(fabs(weight - expected) < 0.001, "Relation 2 broken!");
+//    	ASSERT(fabs(weight - wsum - original) < 0.001, "Relation 1 broken!");
+//    	ASSERT(fabs(weight - expected) < 0.001, "Relation 2 broken!");
     }
 
     static double w(DSTNode* node) {
@@ -109,7 +103,7 @@ struct DiscreteSearchTree {
     void insert(entity_id entity, double weight) {
     	PERF_TIMER();
     	root = DSTNode::insert(root, new DSTNode(entity, weight));
-    	root->assert_relation();
+//    	root->assert_relation();
     }
 
     entity_id random_select(MTwist& rng) {
