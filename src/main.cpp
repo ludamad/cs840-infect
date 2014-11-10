@@ -14,34 +14,39 @@ using namespace std;
  * Test driver
  *****************************************************************************/
 
-static void output_network(Config& config, string label, State& network) {
-	PERF_TIMER();
-	static vector<bool> wasInfected;
-	static bool SDL_INITIALIZED = false;
+struct OutputData {
+	vector<bool> wasInfected;
+	vector<pair<entity_id, size_t>> newlyInfected;
+	int keep_alive = 4000;
+	bool SDL_INITIALIZED = false;
+	double scale;
+	int rows;
+	State* network;
+} O;
 
-	double scale = config.window_size / double(config.sqrt_size);
-	if (!SDL_INITIALIZED) {
-		wasInfected.resize(network.size(), false);
-		sdl_init(scale * config.sqrt_size, scale * config.sqrt_size);
-		SDL_INITIALIZED = true;
+static void output_init(Config& config, State& network) {
+	O.scale = config.window_size / double(config.sqrt_size);
+	O.rows = config.sqrt_size;
+	O.wasInfected.resize(network.size(), false);
+	O.network = &network;
+	sdl_init(O.scale * config.sqrt_size, O.scale * config.sqrt_size, config.sqrt_size, config.sqrt_size);
+}
+
+static void on_infect(entity_id id) {
+	int x = id % O.rows,y = id/O.rows;
+	sdl_fill_pixel(x, y, COL_RED1);
+	O.wasInfected[id] = true;
+	O.newlyInfected.push_back({id, O.network->n_steps});
+}
+
+static void output_network(Config& config, string label, State& network) {
+	if (!config.visualize) {
+		return;
 	}
+	PERF_TIMER();
+
 	sdl_predraw();
-	int i = 0;
-	for (int y = 0; y < config.sqrt_size; y++) {
-		for (int x = 0; x < config.sqrt_size; x++) {
-			auto& e = network.entities.at(i);
-			unsigned int colour = COL_WHITE;
-			if (e.infected) {
-				colour = COL_ORANGE;
-				if (!wasInfected[i]) {
-					colour = COL_RED1;
-					wasInfected[i] = true;
-				}
-			}
-			sdl_fill_rect(floor(x * scale), floor(y * scale), ceil(scale), ceil(scale), colour);
-			i++;
-		}
-	}
+	sdl_copybuffer();
 	stringstream ss(label);
 	char buff[500];
 	int y = 30;
@@ -50,7 +55,17 @@ static void output_network(Config& config, string label, State& network) {
 		sdl_draw_text(buff, 30, y);
 		y += 30;
 	}
-	sdl_postdraw();
+	sdl_postdraw(config.saved_image_base_path);
+	auto copy = O.newlyInfected;
+	O.newlyInfected.clear();
+	for (auto& pair : copy) {
+		int id = pair.first;
+		if (pair.second > network.n_steps - O.keep_alive) {
+			O.newlyInfected.push_back(pair);
+		} else {
+			sdl_fill_pixel(id % O.rows, id / O.rows, COL_ORANGE);
+		}
+	}
 }
 
 
@@ -63,18 +78,29 @@ static int scan_flag(string flag, int argn, const char** argv) {
 	return argn;
 }
 
-struct IOOp {
-	string write_filename, read_filename;
+struct CmdLineParser {
+	string write_filename, read_filename, saved_image_base_path;
 	DataReader* reader = NULL;
 	DataWriter* writer = NULL;
 	int sqrt_size = -1;// -1 if not set here
-	~IOOp() {
+	int seed = -1;
+	bool visualize = true;
+	~CmdLineParser() {
 		delete reader;
 		delete writer;
 	}
-	IOOp(int argn, const char** argv) {
+	CmdLineParser(int argn, const char** argv) {
 		int w_loc = scan_flag("-w", argn, argv);
 		int r_loc = scan_flag("-r", argn, argv);
+		int i_loc = scan_flag("-i", argn, argv);
+		visualize = (scan_flag("-0", argn, argv) == argn);
+		int s_loc = scan_flag("-seed", argn, argv);
+		if (i_loc + 1 < argn) {
+			saved_image_base_path = argv[i_loc + 1];
+		}
+		if (s_loc + 1 < argn) {
+			stringstream(argv[s_loc+1]) >> seed;
+		}
 		if (w_loc + 2 < argn) {
 			stringstream(argv[w_loc+1]) >> sqrt_size;
 			write_filename = argv[w_loc+2];
@@ -97,6 +123,11 @@ struct IOOp {
 		}
 	}
 	bool init_state(Config& config, State& state) {
+		config.saved_image_base_path = saved_image_base_path;
+		config.seed = seed == -1 ? config.seed : seed;
+		config.sqrt_size = sqrt_size == -1 ? config.sqrt_size : sqrt_size;
+		config.size = config.sqrt_size * config.sqrt_size;
+		config.visualize = visualize;
 		PERF_UNIT("Initialization of Network");
 		PERF_TIMER();
 		bool do_simulation = true;
@@ -132,25 +163,28 @@ struct IOOp {
 };
 
 static void run(Config& config, State& network) {
-	PERF_UNIT("Network Simulation Stats");
 	PERF_TIMER();
 	output_network(config, "Initial Conditions", network);
     if (config.delay) {
     	sdl_delay(100);
     }
     MilestoneRep rep;
-    while (true) {
-		sdl_delay(0);
-    	if (network.time_elapsed >= config.min_time && network.active_infections.total_weight() <= config.max_weight) {
-    		break; // Done
-    	}
+    bool finished = false;
+    while (!finished) {
+//		sdl_delay(10);
+		Timer timer;
 		double last_time = network.time_elapsed;
 		// Draw after every millisecond of simulation:
-		while (network.time_elapsed < last_time + 1000) {
+		while (last_time + 10000 > network.time_elapsed) {
+			if (network.time_elapsed >= config.min_time && network.active_infections.total_weight() <= config.max_weight) {
+				finished = true;
+				break; // Done
+			}
 			network.step();
 			rep.report("Simulated step %d");
 		}
 		stringstream ss("Simulation ");
+	    ss.imbue(std::locale(""));
 		ss << "W = "         << network.active_infections.total_weight() << endl
 		   << "sim-time ="   << network.time_elapsed << "s"              << endl
 		   << "step: "       << network.n_steps                          << endl
@@ -169,18 +203,28 @@ int main(int argn, const char** argv) {
 	}
     time_t seed;
     time(&seed);
-    IOOp op(argn, argv);
-    State state;
-    Config config(seed, op.sqrt_size == -1 ? Config::DEFAULT_SQRT_SIZE : op.sqrt_size);
+    CmdLineParser cmd(argn, argv);
+    Config config(seed, Config::DEFAULT_SQRT_SIZE);
+	State state;
+	// Create the network according to passed settings
+	if (!cmd.init_state(config, state)) {
+		// We are just writing the graph and exiting
+		return 0;
+	}
 
-    // Create the network according to passed settings
-    if (!op.init_state(config, state)) {
-    	// We are just writing the graph and exiting
-    	return 0;
-    }
-    state.infect_n_random(100);
-	output_network(config, "Initial Conditions", state);
-    run(config, state);
-    printf("Simulation complete!\n");
+	PERF_UNIT("Network Simulation Stats");
+	for (int i = 0; i < 100; i++) {
+		printf("SIMULATION TRIAL (%d/%d)\n", i, 100);
+		if (cmd.visualize) {
+			output_init(config, state);
+			state.on_infect_func = on_infect;
+		}
+		printf("Infecting 20000 random\n");
+		state.infect_n_random(20000);
+		output_network(config, "Initial Conditions", state);
+		run(config, state);
+		printf("Simulation complete!\n");
+		state.fast_reset(config);
+	}
 	return 0;
 }

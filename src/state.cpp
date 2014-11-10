@@ -195,6 +195,7 @@ bool State::try_infection(entity_id infected_id) {
 	if (e.infected) {
 		return false;
 	}
+	if (on_infect_func) { PERF_TIMER2("on_infect callback"); on_infect_func(infected_id); }
 //	printf("INFECTING (%d) -> (%d)\n", this->last_infector, infected_id);
 	e.infected = true;
 	active_infections.insert(infected_id, e.transmission_prob_total);
@@ -224,7 +225,7 @@ entity_id State::generate_potential_infection() {
 }
 
 void State::fast_reset(Config& S) {
-    active_infections.init(S.size);
+    active_infections = Config::InfectionSet(S.size);
     time_elapsed = 0;
     n_steps = 0, n_infections = 0;
     halflife = S.halflife;

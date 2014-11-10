@@ -115,6 +115,9 @@ struct DataReader {
         FILE* file = fopen(fname.c_str(), "rb"); // read-binary
         buffer.set(new SerializeBuffer(file, SerializeBuffer::INPUT, /* Close file: */true));
     }
+	DataReader() {
+		buffer.set(new SerializeBuffer(stdin, SerializeBuffer::INPUT, /* Do not close file: */false));
+	}
 
     template <typename T>
     DataReader& operator<<(T& obj) {

@@ -22,7 +22,12 @@ struct Config {
 	 *  random_select(rng)
 	 *  total_weight() -> Has important meaning in the kmc simulation: time_step = 1/total_weight
 	 *****************************************************************************/
+#ifndef SEARCH_STRUCT
 	typedef DiscreteFixedTree InfectionSet;
+#else
+	typedef SEARCH_STRUCT InfectionSet;
+#endif
+//	typedef DiscreteSearchTree InfectionSet;
 
 	static const int DEFAULT_SQRT_SIZE = 900;
 	// Actual size of network is sqrt_size * sqrt_size.
@@ -41,8 +46,10 @@ struct Config {
 		size = sqrt_size * sqrt_size;
 	}
 
+	std::string saved_image_base_path;
 	int sqrt_size;
 	int size;
+	bool visualize = false;
 	int seed;
 };
 

@@ -33,16 +33,42 @@ function runit() {
     fi
 }
 
+RECORD=""
+if handle_flag "--record" ; then
+    RECORD=1 
+fi
+
+
 if handle_flag "--debug" || handle_flag "--gdb" || handle_flag "-g" ; then
     RELEASETYPE='debug'
     mkdir -p build/debug 
     cd build/debug
     cmake -DCMAKE_BUILD_TYPE=Debug ../../src
-else
+elif handle_flag "-st" ; then
+    RELEASETYPE='st'
+    mkdir -p build/st
+    cd build/st
+    cmake -DCMAKE_BUILD_TYPE=Release -DEXTRA_DEFS="-DSEARCH_STRUCT=DiscreteSearchTree" ../../src
+else 
     RELEASETYPE='release'
     mkdir -p build/release
     cd build/release
     cmake -DCMAKE_BUILD_TYPE=Release ../../src
 fi
 
-make -j5 && runit
+if [ $RECORD ] ; then
+    make -j5 && runit &
+
+    cd "$ROOTDIR"
+    while true ; do
+        wid=`wmctrl -lp | grep "Infection Simulation" | sed 's/^0x\(\w\+\)\s\+\(.*\)$/0x\1/'`
+        if [ $wid ] ; then
+            echo "Recording window ID $wid"
+            recordmydesktop --windowid "$wid" -o rec.ogv --v_bitrate 200000000 --v_quality 0 --fps 60
+            break
+        fi
+    done
+else
+    make -j5 && runit 
+fi
+

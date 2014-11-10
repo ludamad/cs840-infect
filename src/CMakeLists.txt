@@ -12,7 +12,7 @@ include_directories(
 )
 
 add_definitions(
-	-std=c++11
+    -std=c++11 ${EXTRA_DEFS}
 )
 #SET( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
 

@@ -57,6 +57,7 @@ void PerfTimer::print_results() {
 	}
 	std::sort(sorted_perfs.begin(), sorted_perfs.end());
 
+    setlocale(LC_NUMERIC, "");
 	for (int i = 0; i < sorted_perfs.size(); i++) {
 		MethodPerfProfile& mpp = sorted_perfs[i].profile;
 		float total = mpp.total_microseconds / 1000.0f;
@@ -65,16 +66,17 @@ void PerfTimer::print_results() {
 		float stddev = sqrt(mpp.qvalue / mpp.total_calls) / 1000.0f;
 		float stddev_percentage = (stddev / avg) * 100.0f;
 		printf("func %s:\n"
-				"\t>> total %.4fms"
-				"\n\tcalls %d"
-		        "\n\taverage %.4fms"
-		        "\n\tmax %.4fms"
-				"\n\tstd.dev +-%.4fms, +-%.2f%%\n",
+				"\t>> total %'*.2fms"
+				"\n\tcalls %'*d"
+		        "\n\taverage %'*.2fms"
+		        "\n\tmax %'*.2fms"
+				"\n\tstd.dev    +-%'.4fms, +-%'.2f%%\n",
 				sorted_perfs[i].func_name.c_str(),
-				total, mpp.total_calls,
-				avg, max,
+				10, total, 13, mpp.total_calls,
+				11, avg, 15, max,
 				stddev, stddev_percentage);
 	}
+    setlocale(LC_CTYPE, "");
 //	printf("**** END PERFORMANCE STATS ****\n");
 }
 

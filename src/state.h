@@ -52,6 +52,7 @@ private:
 };
 
 struct State {
+	typedef void (*oninfectf)(int infected_Id);
     size_t size() {
     	return entities.size();
     }
@@ -86,6 +87,7 @@ struct State {
     MTwist rng;
     size_t n_steps = 0;
     size_t n_infections = 0;
+    oninfectf on_infect_func = NULL;
     std::vector<Entity> entities;
     double time_elapsed = 0;
 	Config::InfectionSet active_infections;
