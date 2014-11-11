@@ -7,6 +7,8 @@
 
 #include "discrete_common.h"
 
+const double MIN_WEIGHT_TO_KEEP = 1.0e-25;
+
 // Only used in DiscreteSplayTree
 struct DSTNode {
     double weight;
@@ -99,23 +101,29 @@ struct DiscreteSearchTree {
     entity_id random_select(MTwist& rng) {
     	PERF_TIMER();
         ASSERT(root != NULL && total_weight() > 0.0, "Can't do random select with 0 weight!");
-        return root->random_select(rng.rand_real_not1() * root->weight);
+        double r = rng.rand_real_not1() * root->weight;
+        return root->random_select(r);
     }
 
+    // Downscale the node, possibly reorganizing the tree
     static void downscale(DSTNode* node, double decay) {
         if (node == NULL) {
             return;
         }
-        node->weight /= decay;
         downscale(node->lchild, decay);
         downscale(node->rchild, decay);
+        node->weight /= decay;
     }
 
     void scale(double multiplier) {
         decay_factor /= multiplier;
         if (decay_factor > 1.0e100) {
+        	double decay_inv = 1/decay_factor;
         	PERF_TIMER2("SearchTree: full scale");
-            downscale(root, decay_factor);
+//            downscale(root, decay_factor);
+        	for (auto& node : buffer) {
+        		node.weight *= decay_inv;
+        	}
             decay_factor = 1.0;
         }
     }

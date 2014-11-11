@@ -220,7 +220,7 @@ entity_id State::generate_potential_infection() {
 	this->last_infector = infector_id;
 //	printf("Infector = %d\n", infector_id);
 //	fflush(stdout);
-	Entity& e = entities.at(infector_id);
+	Entity& e = entities[infector_id];
 	return e.pick_influence(rng);
 }
 

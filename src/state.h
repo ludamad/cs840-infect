@@ -17,7 +17,7 @@
 struct Entity {
 	entity_id pick_influence(MTwist& rng) {
 		entity_id pick = weighted_picker.sample(rng);
-		return influence_set.at(pick);
+		return influence_set[pick];
 	}
 
 	// Note: infection is idempotent.

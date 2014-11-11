@@ -213,8 +213,8 @@ int main(int argn, const char** argv) {
 	}
 
 	PERF_UNIT("Network Simulation Stats");
-	for (int i = 0; i < 100; i++) {
-		printf("SIMULATION TRIAL (%d/%d)\n", i, 100);
+	for (int i = 0; i < 10; i++) {
+		printf("SIMULATION TRIAL (%d/%d)\n", i+1, 10);
 		if (cmd.visualize) {
 			output_init(config, state);
 			state.on_infect_func = on_infect;
