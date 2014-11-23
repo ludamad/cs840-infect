@@ -7,6 +7,7 @@ find_package(SDL_ttf REQUIRED)
 add_subdirectory(libs/UnitTest++)
 
 include_directories(
+	libs/
     libs/UnitTest++
     "libs/mersenne-simd"
 )

@@ -4,6 +4,7 @@
  *  Public domain (by Adam Domurad)
  */
 
+#include <map>
 #include <string>
 #include <cstdio>
 #include <cmath>
@@ -48,11 +49,10 @@ struct PProfile {
 void PerfTimer::print_results() {
 //	printf("**** START PERFORMANCE STATS ****\n");
 	std::vector<PProfile> sorted_perfs;
-	MethodPerfProfileMap::iterator prof_iter = perf_map.begin();
-	for (; prof_iter != perf_map.end(); ++prof_iter) {
+	for (auto& perf : perf_map) {
 		PProfile profile;
-		profile.func_name = prof_iter->first;
-		profile.profile = prof_iter->second;
+		profile.func_name = perf.first;
+		profile.profile = perf.second;
 		sorted_perfs.push_back(profile);
 	}
 	std::sort(sorted_perfs.begin(), sorted_perfs.end());
@@ -72,7 +72,7 @@ void PerfTimer::print_results() {
 		        "\n\tmax %'*.2fms"
 				"\n\tstd.dev    +-%'.4fms, +-%'.2f%%\n",
 				sorted_perfs[i].func_name.c_str(),
-				10, total, 13, mpp.total_calls,
+				10, total, 13, int(mpp.total_calls),
 				11, avg, 15, max,
 				stddev, stddev_percentage);
 	}

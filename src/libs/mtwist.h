@@ -46,6 +46,8 @@
 
 #include <vector>
 
+#include <cmath>
+
 #include "customassert.h"
 #include "perf_timer.h"
 #include "mersenne-simd/SFMT.h"
@@ -155,6 +157,14 @@ public:
         return genrand_real1();
     }
 
+    double expovariate(double mean) {
+		double u = rand_real_not1();
+		while (u <= 1e-7) {
+			u = rand_real_not1();
+		}
+		return -log(u) * mean;
+    }
+
 private:
     unsigned int mt[N];
     int mti;
@@ -261,6 +271,14 @@ public:
     /* Using Mersenne-twister, grab a real number within [0,1] */
     double rand_real_with01() {
         return genrand_real1();
+    }
+
+    double expovariate(double mean) {
+		double u = rand_real_not1();
+		while (u <= 1e-7) {
+			u = rand_real_not1();
+		}
+		return -log(u) * mean;
     }
 
 private:

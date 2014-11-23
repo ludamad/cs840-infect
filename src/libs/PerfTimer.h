@@ -7,14 +7,14 @@
 #ifndef PERFTIMER_H_
 #define PERFTIMER_H_
 
-#include <map>
+#include "google/dense_hash_map"
 #include "Timer.h"
 
 struct MethodPerfProfile {
 	Timer timer;
 	int total_calls;
 	long max_microseconds;
-	long long total_microseconds;
+	double total_microseconds;
 	double avg;
 	double qvalue; // used in formula standard deviation = square root of (Q / total calls)
 	MethodPerfProfile() :
@@ -34,7 +34,7 @@ public:
 	void print_results();
 	void clear();
 private:
-	typedef std::map<const char*, MethodPerfProfile> MethodPerfProfileMap;
+	typedef google::dense_hash_map<const char*, MethodPerfProfile> MethodPerfProfileMap;
 	std::map<const char*, MethodPerfProfile> perf_map;
 };
 

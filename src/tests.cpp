@@ -1,4 +1,6 @@
 #include <cstdio>
+#include <vector>
+#include <initializer_list>
 
 #include <UnitTest++.h>
 
@@ -7,6 +9,10 @@
 
 #include "state.h"
 
+#include "boost/heap/binomial_heap.hpp"
+#include "boost/heap/fibonacci_heap.hpp"
+#include "boost/heap/priority_queue.hpp"
+
 #include "libs/StatCalc.h"
 
 const int TEST_SIZE = 1024;
@@ -14,8 +20,8 @@ const int TEST_SAMPLES = 1000;
 const int INCREMENT = TEST_SIZE;// / 100;
 const double SCALE_FACTOR = (TEST_SIZE) / double(TEST_SAMPLES) / 2.0;
 
-static int permutei(int i) {
-	return (i * 257 + 1) % TEST_SIZE;
+static int permutei(int i, int max) {
+	return (i * 257 + 1) % max;
 }
 
 // This test trivially passes.
@@ -34,10 +40,10 @@ TEST(walker_method_empirical) {
 	std::vector<entity_id> influence_set;
 	Entity e;
 	{ PERF_TIMER2("walker_method_preprocess");
-	int j = TEST_SIZE/2;
+	int j = N/2;
 	for (int i = 0; i < N; i++) {
 		e.connect(j, (double)j);
-		j = permutei(j);
+		j = permutei(j, N);
 	}
 	e.preprocess(); }
 
@@ -77,7 +83,7 @@ static void test_discrete_choice_structure() {
 	int j = 17;
 	for (int i = 0; i < N; i++) {
 		tree.insert(j, j);
-		j = permutei(j);
+		j = permutei(j, N);
 	}
 
 	std::vector<int> pick_count(N, 0);
@@ -106,4 +112,42 @@ TEST(discrete_fixedtree_empirical) {
 TEST(discrete_splaytree_empirical) {
 	PERF_UNIT("splaytree");
 	test_discrete_choice_structure<DiscreteSearchTree>();
+}
+
+template <typename T>
+static void measure_heap() {
+	PERF_TIMER2("measure_heap");
+	T tree;
+	const int N = TEST_SIZE * TEST_SAMPLES;
+	int j = N/2;
+	for (int i = 0; i < N; i++) {
+		tree.push(j);
+		j = permutei(j, N);
+		if ((j+i) % 52 == 0) {
+			tree.pop();
+		}
+		if (tree.size() > 100) {
+			while (!tree.empty()) {
+				tree.pop();
+			}
+		}
+	}
+	while (!tree.empty()) {
+		tree.pop();
+	}
+}
+
+TEST(fibonacci_heap_perf) {
+	PERF_UNIT("fibonacci_heap_perf");
+	measure_heap<boost::heap::fibonacci_heap<double>>();
+}
+
+TEST(binomial_heap_perf) {
+	PERF_UNIT("binomial_heap_perf");
+	measure_heap<boost::heap::binomial_heap<double>>();
+}
+
+TEST(priority_queue_perf) {
+	PERF_UNIT("priority_queue_perf");
+	measure_heap<boost::heap::priority_queue<double>>();
 }

@@ -175,7 +175,7 @@ static void run(Config& config, State& network) {
 		Timer timer;
 		double last_time = network.time_elapsed;
 		// Draw after every millisecond of simulation:
-		while (last_time + 10000 > network.time_elapsed) {
+		while (last_time + 100 > network.time_elapsed) {
 			if (network.time_elapsed >= config.min_time && network.active_infections.total_weight() <= config.max_weight) {
 				finished = true;
 				break; // Done
@@ -203,6 +203,7 @@ int main(int argn, const char** argv) {
 	}
     time_t seed;
     time(&seed);
+    seed = 2;
     CmdLineParser cmd(argn, argv);
     Config config(seed, Config::DEFAULT_SQRT_SIZE);
 	State state;
@@ -213,8 +214,9 @@ int main(int argn, const char** argv) {
 	}
 
 	PERF_UNIT("Network Simulation Stats");
-	for (int i = 0; i < 10; i++) {
-		printf("SIMULATION TRIAL (%d/%d)\n", i+1, 10);
+	int N_SIMS = 1;
+	for (int i = 0; i < N_SIMS; i++) {
+		printf("SIMULATION TRIAL (%d/%d)\n", i+1, N_SIMS);
 		if (cmd.visualize) {
 			output_init(config, state);
 			state.on_infect_func = on_infect;
