@@ -10,6 +10,7 @@
 
 #include "../mtwist.h"
 #include "../DataReadWrite.h"
+#include "../graph.h"
 
 /**
  * Efficient random sampling with replacement using Walker's alias method.

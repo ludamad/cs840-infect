@@ -143,7 +143,7 @@ struct CmdLineParser {
 		} else {
 			printf("Creating network of size %d\n", config.size);
 			state.init(config);
-			state.generate_graph();
+			state.set_graph(generate_graph(config));
 			if (writer != NULL) {
 				printf("Saving to '%s': Graph of size %d by %d\n",
 						write_filename.c_str(), config.sqrt_size, config.sqrt_size);
@@ -214,7 +214,7 @@ int main(int argn, const char** argv) {
 	}
 
 	PERF_UNIT("Network Simulation Stats");
-	int N_SIMS = 1;
+	int N_SIMS = 10;
 	for (int i = 0; i < N_SIMS; i++) {
 		printf("SIMULATION TRIAL (%d/%d)\n", i+1, N_SIMS);
 		if (cmd.visualize) {

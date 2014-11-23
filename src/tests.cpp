@@ -17,7 +17,7 @@
 
 const int TEST_SIZE = 1024;
 const int TEST_SAMPLES = 1000;
-const int INCREMENT = TEST_SIZE;// / 100;
+const int INCREMENT = TEST_SIZE / 25;
 const double SCALE_FACTOR = (TEST_SIZE) / double(TEST_SAMPLES) / 2.0;
 
 static int permutei(int i, int max) {
@@ -40,12 +40,13 @@ TEST(walker_method_empirical) {
 	std::vector<entity_id> influence_set;
 	Entity e;
 	{ PERF_TIMER2("walker_method_preprocess");
+	Node n;
 	int j = N/2;
 	for (int i = 0; i < N; i++) {
-		e.connect(j, (double)j);
+		n.push_back({(double)j, j});
 		j = permutei(j, N);
 	}
-	e.preprocess(); }
+	e.init(n); }
 
 	std::vector<int> pick_count(N, 0);
 	for (int i = 0; i < N * M; i++) {
