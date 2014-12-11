@@ -162,7 +162,9 @@ public:
 		while (u <= 1e-7) {
 			u = rand_real_not1();
 		}
-		return -log(u) * mean;
+		double r = -log(u) * mean;
+		ASSERT(r >= 0, "expovariate cannot be negative!");
+		return r;
     }
 
 private:

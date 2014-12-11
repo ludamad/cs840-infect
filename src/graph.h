@@ -7,6 +7,8 @@
 struct Edge {
 	double prob;
 	int node;
+	Edge() {
+	}
 	Edge(double prob, int node) : prob(prob), node(node) {
 	}
 };

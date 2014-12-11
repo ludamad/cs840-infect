@@ -8,34 +8,26 @@
 
 #include "config.h"
 #include "discrete_fixedtree.h"
+#include "discrete_searchtree.h"
 #include "graph.h"
 
 /*****************************************************************************
  * An entity in the random generation simulation
  *****************************************************************************/
 
-// A connection, preprocessed using the walker method
-struct WalkerConnection {
-	double choice_a_prob;
-	entity_id choice_a, choice_b;
-	entity_id pick(MTwist& rng) const {
-		bool use_choice_a = (rng.rand_real_not1() < choice_a_prob);
-		return use_choice_a ? choice_a : choice_b;
-	}
-};
 
 // Code modified from github.com/ntamas/netctrl
 struct WalkerConnections {
-	std::vector<WalkerConnection> connections;
-	double total_prob = 0;
-	entity_id pick(MTwist& rng) const {
+	// Returns -1 on invalid event
+	entity_id pick(MTwist& rng) {
 		size_t m = connections.size();
-		return connections[rng.rand_int(m)].pick(rng);
+		return connections[rng.rand_int(m)].pick(*this, rng);
 	}
 	void init(const Node& node) {
 		// Initial values:
 		size_t n = node.size();
     	connections.resize(n);
+    	was_infected.resize(n);
 	    std::vector<int> shortI, longI;
 	    shortI.reserve(n), longI.reserve(n);
 		total_prob = 0;
@@ -47,6 +39,8 @@ struct WalkerConnections {
     	for (int i = 0; i < n; i++) {
     		connections[i].choice_a_prob = node[i].prob / total_prob * n;
     		connections[i].choice_a = node[i].node;
+    		connections[i].choice_b_index = -1;
+    		connections[i].was_chosen = false;
     	}
 
 	    // Initialize shortIndexes and longIndexes
@@ -59,7 +53,7 @@ struct WalkerConnections {
 	    while (!shortI.empty() && !longI.empty()) {
 	        int S = shortI.back(), L = longI.back();
 	        shortI.pop_back();
-	        connections[S].choice_b = node[L].node;
+	        connections[S].choice_b_index = L;
 	        connections[L].choice_a_prob -= (1 - connections[S].choice_a_prob);
 	        if (connections[L].choice_a_prob < 1) {
 	            shortI.push_back(L);
@@ -67,6 +61,38 @@ struct WalkerConnections {
 	        }
 	    }
 	}
+public:
+	// A connection, preprocessed using the walker method
+	struct Connection {
+		double choice_a_prob;
+		entity_id choice_a;
+		int choice_b_index;
+		bool was_chosen;
+		// Return -1 if invalid event generated:
+		entity_id pickA() {
+			if (was_chosen) {
+				return -1;
+			}
+			was_chosen = true;
+			return choice_a;
+		}
+		entity_id pick(WalkerConnections& W, MTwist& rng) {
+			bool use_choice_a = (rng.rand_real_not1() < choice_a_prob);
+			return use_choice_a ? pickA() : W.connections[choice_b_index].pickA();
+		}
+	};
+	std::vector<Connection> connections;
+	std::vector<bool> was_infected;
+	double total_prob = 0;
+};
+
+struct DynamicConnections {
+	entity_id pick_influence(MTwist& rng) {
+		entity_id id = search_tree.random_select(rng);
+
+	}
+
+	DiscreteSearchTree search_tree;
 };
 
 struct Entity {
@@ -85,17 +111,16 @@ struct Entity {
     	rw << influence_set.connections;
     }
 
-    /** Member variables: **/
-	// Note: infection is idempotent.
-	// Once an individual is infected and starts a contagion window, it can effectively be considered deleted from the network.
-	bool infected = false;
-
 	double total_probability() {
 		return influence_set.total_prob;
 	}
-private:
+
+public:
+	// Note: infection is idempotent.
+	// Once an individual is infected and starts a contagion window, it can effectively be considered deleted from the network.
+	bool infected = false;
     // The preprocessed influences:
-    WalkerConnections influence_set;
+	DynamicConnections influence_set;
 };
 
 struct State {
@@ -122,9 +147,17 @@ struct State {
     	return entities.at(id);
     }
     double current_timestep();
-    void fast_reset(Config& S);
+    void fast_reset(Config& C);
 
-    /** Member variables: **/
+    double total_weight() const {
+    	return active_infections.total_weight();
+    }
+
+    bool finished(Config& C) const {
+    	return (time_elapsed >= C.min_time && total_weight() <= C.max_weight);
+    }
+
+public:
     double time_interval_overage = -1;
     double halflife = -1;
     // Hack to store extra result from generate_potential_infection:

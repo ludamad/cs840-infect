@@ -9,7 +9,7 @@
 
 const double MIN_WEIGHT_TO_KEEP = 1.0e-25;
 
-// Only used in DiscreteSplayTree
+// Only used in DiscreteSearchTree
 struct DSTNode {
     double weight;
     entity_id entity;
@@ -35,18 +35,36 @@ struct DSTNode {
         // if lchild == NULL and rchild == NULL always will return entity
         return entity;
     }
+// How to delete?
+
+    entity_id random_remove(double r) {
+        DEBUG_CHECK(r > 0 && r < weight, "Bad random value!");
+        double wl = w(lchild);
+        if (r < wl) {
+            return lchild->random_select(r);
+        }
+        r -= wl;
+        double wr = w(rchild);
+        if (r < wr) {
+            return rchild->random_select(r);
+        }
+        // if lchild == NULL and rchild == NULL always will return entity
+        // Delete the the entity here,
+        return entity;
+    }
+
     static DSTNode* insert(DSTNode* root, DSTNode* child) {
     	if (root == NULL) {
     		return child;
     	}
-    	ASSERT(child->lchild == NULL && child->rchild == NULL, "Nontrivial insert!");
+//    	ASSERT(child->lchild == NULL && child->rchild == NULL, "Nontrivial insert!");
     	double lW = w(root->lchild), rW = w(root->rchild);
     	double ww = root->weight - lW - rW;
     	if (child->weight > ww) {
     		// Swap who-is-who:
     		std::swap(root->lchild, child->lchild);
     		std::swap(root->rchild, child->rchild);
-    		child->weight += root->weight;
+    		child->weight += root->weight - ww;
     		root->weight = ww;
     		std::swap(root, child);
     	} else {
@@ -105,6 +123,13 @@ struct DiscreteSearchTree {
         return root->random_select(r);
     }
 
+    entity_id random_remove(MTwist& rng) {
+    	PERF_TIMER();
+        ASSERT(root != NULL && total_weight() > 0.0, "Can't do random select with 0 weight!");
+        double r = rng.rand_real_not1() * root->weight;
+        return root->random_remove(&root, r);
+    }
+
     // Downscale the node, possibly reorganizing the tree
     static void downscale(DSTNode* node, double decay) {
         if (node == NULL) {
@@ -127,7 +152,7 @@ struct DiscreteSearchTree {
             decay_factor = 1.0;
         }
     }
-    double total_weight() {
+    double total_weight() const {
         return root == NULL ? 0 : root->weight / decay_factor;
     }
 private:

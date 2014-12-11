@@ -33,7 +33,7 @@ struct Config {
 	// Actual size of network is sqrt_size * sqrt_size.
 	// Simple restriction to allow for easy drawing.
 	double halflife = 1;
-	bool delay = false;
+	bool delay = true;
 	// Simulation end conditions:
 	double min_time = 600, max_weight = 1e-32;
 

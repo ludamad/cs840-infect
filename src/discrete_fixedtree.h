@@ -29,12 +29,11 @@ struct DiscreteFixedTree {
 		}
 	}
 
-	void insert(int i, double weight) {
+	void insert(int i, double delta_weight) {
 		PERF_TIMER();
-		weight *= decay_factor;
 		DFTNode* N = &nodes[i];
-		double delta_weight = (weight - N->total_weight);
-		N->total_weight = weight;
+//		double delta_weight = (weight - N->total_weight);
+		N->total_weight = delta_weight * decay_factor;
 		int pid = N->parent_id;
 		while (pid != DFTNotExists) {
 			N = &nodes[pid];
@@ -61,7 +60,7 @@ struct DiscreteFixedTree {
 			decay_factor = 1.0;
 		}
 	}
-	double total_weight() {
+	double total_weight() const {
 		return nodes[size].total_weight / decay_factor;
 	}
 private:

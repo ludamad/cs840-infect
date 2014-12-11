@@ -1,5 +1,6 @@
 #include "graph.h"
 #include "libs/mtwist.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -33,25 +34,32 @@ Graph generate_graph(Config& config) {
 	MilestoneRep rep;
 	FOR_ID(x, y, A) {
 		rep.report("Connected %d entities");
+		if (rng.rand_real_not0() < 0.55) {
+			continue;
+		}
 		// How far away to effect?
-		double SxD = 3, SyD = 3;
+		double SxD = 1, SyD = 1;
 		for (int i = 0; i < 10; i++) {
 			SxD += rng.rand_real_with01();
 			SyD += rng.rand_real_with01();
-			if (rng.random_chance(0.5)) {
+			if (rng.random_chance(0.33)) {
 				break;
 			}
 		}
 		int Sx = (int) SxD, Sy = (int) SyD;
-		double popularity = rng.rand_real_not0();
 		int n_squares = (1 + 2 * Sx) * (1 + 2 * Sy) - 1;
+		double popularity = rng.rand_real_not0() * 2;
 		for (int sy = -Sy; sy <= Sy; sy++) {
 			for (int sx = -Sx; sx <= Sx; sx++) {
+				if (rng.rand_real_not0() < 0.60) {
+					continue;
+				}
 				int nx = (x + rows + sx) % rows, ny = (y + rows + sy) % rows;
 				// This ensures everyone is connected to their neighbours, once it has completed.
 				if (sx != 0 || sy != 0) {
+					double dist = pow(sx*sx + sy*sy, 0.5);
 					entity_id id = ny * rows + nx;
-					connect(g, A, id, popularity / n_squares / 30);
+					connect(g, A, id, std::min(1.0, popularity / dist));
 				}
 			}
 		}

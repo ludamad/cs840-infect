@@ -12,6 +12,8 @@
 #include "boost/heap/binomial_heap.hpp"
 #include "boost/heap/fibonacci_heap.hpp"
 #include "boost/heap/priority_queue.hpp"
+#include "boost/heap/skew_heap.hpp"
+#include "boost/heap/pairing_heap.hpp"
 
 #include "libs/StatCalc.h"
 
@@ -151,4 +153,14 @@ TEST(binomial_heap_perf) {
 TEST(priority_queue_perf) {
 	PERF_UNIT("priority_queue_perf");
 	measure_heap<boost::heap::priority_queue<double>>();
+}
+
+TEST(pairing_heap_perf) {
+	PERF_UNIT("pairing_heap_perf");
+	measure_heap<boost::heap::pairing_heap<double>>();
+}
+
+TEST(skew_heap_perf) {
+	PERF_UNIT("skew_heap_perf");
+	measure_heap<boost::heap::skew_heap<double>>();
 }

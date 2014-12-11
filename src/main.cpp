@@ -7,8 +7,11 @@
 
 #include "sdl.h"
 #include "state.h"
+//#include "state_alt.h"
 
 using namespace std;
+
+//typedef StateAlt State;
 
 /*****************************************************************************
  * Test driver
@@ -162,37 +165,37 @@ struct CmdLineParser {
 	}
 };
 
-static void run(Config& config, State& network) {
+static void run(Config& C, State& state) {
 	PERF_TIMER();
-	output_network(config, "Initial Conditions", network);
-    if (config.delay) {
+	output_network(C, "Initial Conditions", state);
+    if (C.delay) {
     	sdl_delay(100);
     }
     MilestoneRep rep;
     bool finished = false;
     while (!finished) {
-//		sdl_delay(10);
+		sdl_delay(10);
 		Timer timer;
-		double last_time = network.time_elapsed;
+		double last_time = state.time_elapsed;
 		// Draw after every millisecond of simulation:
-		while (last_time + 100 > network.time_elapsed) {
-			if (network.time_elapsed >= config.min_time && network.active_infections.total_weight() <= config.max_weight) {
+		while (last_time + 1 > state.time_elapsed) {
+			if (state.finished(C)) {
 				finished = true;
 				break; // Done
 			}
-			network.step();
+			state.step();
 			rep.report("Simulated step %d");
 		}
 		stringstream ss("Simulation ");
 	    ss.imbue(std::locale(""));
-		ss << "W = "         << network.active_infections.total_weight() << endl
-		   << "sim-time ="   << network.time_elapsed << "s"              << endl
-		   << "step: "       << network.n_steps                          << endl
-		   << "infections: " << network.n_infections;
-		output_network(config, ss.str(), network);
+		ss << "W = "         << state.total_weight() << endl
+		   << "sim-time ="   << state.time_elapsed << "s"              << endl
+		   << "step: "       << state.n_steps                          << endl
+		   << "infections: " << state.n_infections;
+		output_network(C, ss.str(), state);
 	}
-    output_network(config, "Simulation Complete", network);
-    if (config.delay) {
+    output_network(C, "Simulation Complete", state);
+    if (C.delay) {
     	sdl_delay(1000);
     }
 }
@@ -221,8 +224,8 @@ int main(int argn, const char** argv) {
 			output_init(config, state);
 			state.on_infect_func = on_infect;
 		}
-		printf("Infecting 20000 random\n");
-		state.infect_n_random(20000);
+		printf("Infecting 10 random\n");
+		state.infect_n_random(10);
 		output_network(config, "Initial Conditions", state);
 		run(config, state);
 		printf("Simulation complete!\n");

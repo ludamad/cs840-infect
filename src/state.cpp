@@ -59,38 +59,38 @@ void State::step() {
 	PERF_TIMER();
 
 	entity_id infected_id; // declared here to satisfy 'goto' constraints
-
-	// TODO: Revise this comment
-	// We employ the rejection method throughout for simplicity.
-	// If a generated event fails to meet a constraint, we can simply restart the whole process.
-	// This allows simpler weight calculations as we can use weights oblivious to the constraint.
-
-	double delta_time = current_timestep();
-	if (delta_time > DECAY_MIN_INTERVAL) {
-		// Will down-adjust delta time to be DECAY_MIN_INTERVAL
-		// To compensate, check if the adjusted action should be result in nothing happening.
-		if (test_if_null_step(rng, active_infections.total_weight(), &delta_time)) {
-			goto afterinfection;
+	bool valid_event_occurred = false;
+	while (!valid_event_occurred) {
+		double delta_time = current_timestep();
+		if (delta_time > DECAY_MIN_INTERVAL) {
+			// Will down-adjust delta time to be DECAY_MIN_INTERVAL
+			// To compensate, check if the adjusted action should be result in nothing happening.
+			if (test_if_null_step(rng, active_infections.total_weight(), &delta_time)) {
+				goto afterinfection;
+			}
 		}
-	}
 
-	// Find the event that occurs (an infection)
-	// NOTE: It may *seem* like we should employ the rejection method here,
-	// but that would invalidate our timestep logic.
-	// Since the timestep is overestimated with respect to invalid infections,
-	// we simply do nothing but step time if a valid infection does not occur.
-	infected_id = generate_potential_infection();
-	try_infection(infected_id);
+		// Find the event that occurs (an infection)
+		// We employ the rejection method here if an entity would infect the same entity twice.
+		// However, if an infection occurs twice from different infectors,
+		// we simply do nothing but step time if a valid infection does not occur.
+		infected_id = generate_potential_infection();
+		if (infected_id == -1) {
+			continue; // Reject!
+		}
+		try_infection(infected_id);
 
-	afterinfection:
-	n_steps++;
-	// Pass time:
-	time_interval_overage += delta_time;
-	while (time_interval_overage > DECAY_MIN_INTERVAL) {
-		active_infections.scale(DECAY_MULTIPLIER);
-		time_interval_overage -= DECAY_MIN_INTERVAL;
+		afterinfection:
+		valid_event_occurred = true;
+		n_steps++;
+		// Pass time:
+		time_interval_overage += delta_time;
+		while (time_interval_overage > DECAY_MIN_INTERVAL) {
+			active_infections.scale(DECAY_MULTIPLIER);
+			time_interval_overage -= DECAY_MIN_INTERVAL;
+		}
+		time_elapsed += delta_time;
 	}
-	time_elapsed += delta_time;
 }
 bool State::try_infection(entity_id infected_id) {
         Entity& e = entities[infected_id];
@@ -120,8 +120,6 @@ entity_id State::generate_potential_infection() {
 	PERF_TIMER();
 	entity_id infector_id = active_infections.random_select(rng);
 	this->last_infector = infector_id;
-//	printf("Infector = %d\n", infector_id);
-//	fflush(stdout);
 	Entity& e = entities[infector_id];
 	return e.pick_influence(rng);
 }
