@@ -1,5 +1,9 @@
 set -e
 
+function colout {
+    python util/colout/colout.py "$@"
+}
+
 E='([\d\.ms\(\)]+)[ \t]*'
 
 trap "" INT

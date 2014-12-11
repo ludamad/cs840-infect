@@ -85,15 +85,15 @@ public:
 	std::vector<bool> was_infected;
 	double total_prob = 0;
 };
-
-struct DynamicConnections {
-	entity_id pick_influence(MTwist& rng) {
-		entity_id id = search_tree.random_select(rng);
-
-	}
-
-	DiscreteSearchTree search_tree;
-};
+//
+//struct DynamicConnections {
+//	entity_id pick_influence(MTwist& rng) {
+//		entity_id id = search_tree.random_select(rng);
+//
+//	}
+//
+//	DiscreteSearchTree search_tree;
+//};
 
 struct Entity {
 	entity_id pick_influence(MTwist& rng) {
@@ -120,7 +120,7 @@ public:
 	// Once an individual is infected and starts a contagion window, it can effectively be considered deleted from the network.
 	bool infected = false;
     // The preprocessed influences:
-	DynamicConnections influence_set;
+	WalkerConnections influence_set;
 };
 
 struct State {

@@ -122,13 +122,13 @@ struct DiscreteSearchTree {
         double r = rng.rand_real_not1() * root->weight;
         return root->random_select(r);
     }
-
-    entity_id random_remove(MTwist& rng) {
-    	PERF_TIMER();
-        ASSERT(root != NULL && total_weight() > 0.0, "Can't do random select with 0 weight!");
-        double r = rng.rand_real_not1() * root->weight;
-        return root->random_remove(&root, r);
-    }
+//
+//    entity_id random_remove(MTwist& rng) {
+//    	PERF_TIMER();
+//        ASSERT(root != NULL && total_weight() > 0.0, "Can't do random select with 0 weight!");
+//        double r = rng.rand_real_not1() * root->weight;
+//        return root->random_remove(&root, r);
+//    }
 
     // Downscale the node, possibly reorganizing the tree
     static void downscale(DSTNode* node, double decay) {

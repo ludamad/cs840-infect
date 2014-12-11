@@ -4,6 +4,7 @@
 
 #include <UnitTest++.h>
 
+#include "discrete_bst.h"
 #include "discrete_fixedtree.h"
 #include "discrete_searchtree.h"
 
@@ -17,7 +18,7 @@
 
 #include "libs/StatCalc.h"
 
-const int TEST_SIZE = 1024;
+const int TEST_SIZE = 256;
 const int TEST_SAMPLES = 1000;
 const int INCREMENT = TEST_SIZE / 25;
 const double SCALE_FACTOR = (TEST_SIZE) / double(TEST_SAMPLES) / 2.0;
@@ -39,7 +40,6 @@ TEST(walker_method_empirical) {
 	const int M = TEST_SAMPLES;
 
 	// Test the average results of applying our distribution algorithm for entity connection relationships.
-	std::vector<entity_id> influence_set;
 	Entity e;
 	{ PERF_TIMER2("walker_method_preprocess");
 	Node n;
@@ -52,9 +52,16 @@ TEST(walker_method_empirical) {
 
 	std::vector<int> pick_count(N, 0);
 	for (int i = 0; i < N * M; i++) {
-		int p;
-		{ PERF_TIMER2("walker_method_pick") ; p = e.pick_influence(rng); }
-		pick_count[p]++;
+		int p = -1;
+	    while (p == -1) {
+	        PERF_TIMER2("walker_method_pick") ; p = e.pick_influence(rng);
+	    }
+		if (i % (e.influence_set.connections.size() /2) == 0) {
+            for (auto& conn : e.influence_set.connections) {
+                conn.was_chosen = false;
+            }
+		}
+        pick_count[p]++;
 	}
 
 	ASSERT(pick_count[0] == 0, "'0' should not be picked!");
@@ -112,9 +119,21 @@ TEST(discrete_fixedtree_empirical) {
 	test_discrete_choice_structure<DiscreteFixedTree>();
 }
 
-TEST(discrete_splaytree_empirical) {
-	PERF_UNIT("splaytree");
+TEST(discrete_searchtree_empirical) {
+	PERF_UNIT("searchtree");
 	test_discrete_choice_structure<DiscreteSearchTree>();
+}
+
+TEST(discrete_bst_empirical) {
+	PERF_UNIT("weighted bst");
+	DiscreteBST bst;
+	for (int i = 1; i < 100; i++) {
+	    bst.insert(i,i);
+	}
+	for (int i = 1; i < 100; i++) {
+	    CHECK(bst.find(i, 0)->obj.key == i);
+	}
+	test_discrete_choice_structure<DiscreteBST>();
 }
 
 template <typename T>

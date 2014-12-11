@@ -1,6 +1,10 @@
 #!/bin/bash
 set +x
 
+function unbuffer() {
+    ./util/unbuffer.sh "$@"
+}
+
 ROOTDIR="$(pwd)"
 
 args="$@" # Create a mutable copy of the program arguments
@@ -43,12 +47,12 @@ if handle_flag "--debug" || handle_flag "--gdb" || handle_flag "-g" ; then
     RELEASETYPE='debug'
     mkdir -p build/debug 
     cd build/debug
-    cmake -DCMAKE_BUILD_TYPE=Debug ../../src
+    cmake -DCMAKE_BUILD_TYPE=Debug -DEXTRA_DEFS="-fsanitize=address -D_GLIBCXX_DEBUG" ../../src
 elif handle_flag "-st" ; then
     RELEASETYPE='st'
     mkdir -p build/st
     cd build/st
-    cmake -DCMAKE_BUILD_TYPE=Release -DEXTRA_DEFS="-DSEARCH_STRUCT=DiscreteSearchTree" ../../src
+    cmake -DCMAKE_BUILD_TYPE=Release -DEXTRA_DEFS="-DSEARCH_STRUCT=DiscreteBST" ../../src
 else 
     RELEASETYPE='release'
     mkdir -p build/release

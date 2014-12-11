@@ -7,6 +7,7 @@
 
 #include "discrete_fixedtree.h"
 #include "discrete_searchtree.h"
+#include "discrete_bst.h"
 
 struct Config {
 	/** Change these! */
