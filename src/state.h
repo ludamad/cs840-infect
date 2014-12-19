@@ -70,10 +70,10 @@ public:
 		bool was_chosen;
 		// Return -1 if invalid event generated:
 		entity_id pickA() {
-			if (was_chosen) {
-				return -1;
-			}
-			was_chosen = true;
+//			if (was_chosen) {
+//				return -1;
+//			}
+//			was_chosen = true;
 			return choice_a;
 		}
 		entity_id pick(WalkerConnections& W, MTwist& rng) {
@@ -154,7 +154,7 @@ struct State {
     }
 
     bool finished(Config& C) const {
-    	return (time_elapsed >= C.min_time && total_weight() <= C.max_weight);
+    	return n_infections * 100 >= C.size * 99 || (time_elapsed >= C.min_time && total_weight() <= C.max_weight);
     }
 
 public:

@@ -7,6 +7,7 @@
 
 #include "discrete_fixedtree.h"
 #include "discrete_searchtree.h"
+#include "discrete_buckettree.h"
 #include "discrete_bst.h"
 
 struct Config {
@@ -36,7 +37,7 @@ struct Config {
 	double halflife = 1;
 	bool delay = true;
 	// Simulation end conditions:
-	double min_time = 600, max_weight = 1e-32;
+	double min_time = 100, max_weight = 1;
 
 	// Strictly for visualization purposes:
 	size_t window_size = 900;

@@ -31,7 +31,7 @@ function runit() {
     if [ $RELEASETYPE = debug ] ; then
         gdb -silent -ex=r -ex=q --args $prog $args 
     elif true || handle_flag "-C" || handle_flag "--color" ; then
-        unbuffer $prog $args | util/colorify.sh
+        unbuffer $prog $args #| util/colorify.sh
     else
         $prog $args
     fi
@@ -47,12 +47,23 @@ if handle_flag "--debug" || handle_flag "--gdb" || handle_flag "-g" ; then
     RELEASETYPE='debug'
     mkdir -p build/debug 
     cd build/debug
-    cmake -DCMAKE_BUILD_TYPE=Debug -DEXTRA_DEFS="-fsanitize=address -D_GLIBCXX_DEBUG" ../../src
+    #cmake -DCMAKE_BUILD_TYPE=Debug -DEXTRA_DEFS="-fsanitize=address -D_GLIBCXX_DEBUG" ../../src
+    cmake -DCMAKE_BUILD_TYPE=Debug -DEXTRA_DEFS="-D_GLIBCXX_DEBUG" ../../src
 elif handle_flag "-st" ; then
     RELEASETYPE='st'
     mkdir -p build/st
     cd build/st
+    cmake -DCMAKE_BUILD_TYPE=Release -DEXTRA_DEFS="-DSEARCH_STRUCT=DiscreteSearchTree" ../../src
+elif handle_flag "-bst" ; then
+    RELEASETYPE='bst'
+    mkdir -p build/bst
+    cd build/bst
     cmake -DCMAKE_BUILD_TYPE=Release -DEXTRA_DEFS="-DSEARCH_STRUCT=DiscreteBST" ../../src
+elif handle_flag "-bt" ; then
+    RELEASETYPE='bt'
+    mkdir -p build/bt
+    cd build/bt
+    cmake -DCMAKE_BUILD_TYPE=Release -DEXTRA_DEFS="-DSEARCH_STRUCT=DiscreteBucketTree" ../../src
 else 
     RELEASETYPE='release'
     mkdir -p build/release

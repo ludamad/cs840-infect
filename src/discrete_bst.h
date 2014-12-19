@@ -6,6 +6,7 @@
 #include <algorithm>
 
 #include "libs/mtwist.h"
+#include "discrete_common.h"
 
 template <class K, class Num, class V>
 struct DBstNode {
@@ -46,6 +47,17 @@ struct DBstNode {
         return n ? n->weight : Num(0);
     }
 
+    template <class Functor>
+    void forall(Functor f) {
+    	f(this);
+    	if (left) left->forall(f);
+    	if (right) right->forall(f);
+    }
+    void scale(Num d) {
+    	weight *= d;
+    	if (left) left->scale(d);
+    	if (right) right->scale(d);
+    }
     DBstNode* try_rotate() {
         // Calculate, using our weighting heuristic, which rotation (if any) to do.
         // We want to minimize our heuristic value (hval).
@@ -98,47 +110,51 @@ struct DBstNode {
 };
 
 template <class K, class W, class V>
-struct Treap {
-    DBstNode<K,W,V>* root = NULL;
-    ~Treap() {
+struct DBST {
+	typedef DBstNode<K,W,V> Node;
+    Node* root = NULL;
+    ~DBST() {
         delete root;
     }
 
-    DBstNode<K,W,V>* find(const K& k, const W& delta_weight) {
-        return DBstNode<K,W,V>::find(&root, k, delta_weight);
+    Node* find(const K& k, const W& delta_weight) {
+        return Node::find(&root, k, delta_weight);
     }
 };
 
 // Guarantees O(log N) operations very trivially
 // where N is the _maximum_ size of the universe.
-struct DiscreteBST : public Treap<int, double, int> {
+struct DiscreteBST : public DBST<int, floatT, int> {
     DiscreteBST(int __unused = 0) {
     }
 	void init(int n) {
 		*this = DiscreteBST();
 	}
 
-	void insert(int i, double delta_weight) {
-	    find(i, delta_weight);
+	void insert(int i, floatT delta_weight) {
+		PERF_TIMER();
+	    find(i, delta_weight / decay_factor);
 	}
 
 	int random_select(MTwist& rng) {
-		double r = rng.rand_real_not1() * total_weight();
+		PERF_TIMER();
+		floatT r = rng.rand_real_not1() * total_weight();
 		return root->weighted_select(r)->key;
 	}
 
-	void scale(double multiplier) {
-//		decay_factor /= multiplier;
-//		if (decay_factor > 1.0e100) {
-//			for (auto& node : nodes) {
-//				node.total_weight /= decay_factor;
-//			}
-//			decay_factor = 1.0;
-//		}
+	void scale(floatT multiplier) {
+		decay_factor *= multiplier;
+		if (decay_factor < FLOAT_EXP_BOTTOM) {
+			if (root) {
+				root->scale(decay_factor);
+			}
+			decay_factor = 1.0;
+		}
 	}
-	double total_weight() const {
-	    return root ? root->weight : 0;
+	floatT total_weight() const {
+	    return root ? root->weight * decay_factor : 0;
 	}
+	floatT decay_factor = 1.0;
 };
 
 #endif /* DISCRETE_BST_H_ */

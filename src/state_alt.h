@@ -8,6 +8,9 @@
 #include "boost/heap/binomial_heap.hpp"
 #include "boost/heap/fibonacci_heap.hpp"
 #include "boost/heap/priority_queue.hpp"
+#include "boost/heap/pairing_heap.hpp"
+#include "boost/heap/skew_heap.hpp"
+#include "boost/heap/d_ary_heap.hpp"
 
 #include "libs/mtwist.h"
 
@@ -40,12 +43,15 @@ struct InfectionEvent {
 	}
 };
 
+//typedef boost::heap::d_ary_heap<InfectionEvent, boost::heap::mutable_<true>, boost::heap::arity<2>> EventQueue;
+//typedef boost::heap::pairing_heap<InfectionEvent> EventQueue;
 typedef boost::heap::fibonacci_heap<InfectionEvent> EventQueue;
+//typedef boost::heap::skew_heap<InfectionEvent, boost::heap::mutable_<true>> EventQueue;
 typedef EventQueue::handle_type EventHandle;
 
 struct EntityAlt {
 	Node node;
-	bool infected = false;
+	bool infected = false, has_handle = false;
 	EventHandle event_handle;
 	READ_WRITE(rw) {
 		rw << node;

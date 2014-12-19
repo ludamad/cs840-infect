@@ -163,7 +163,7 @@ public:
 			u = rand_real_not1();
 		}
 		double r = -log(u) * mean;
-		ASSERT(r >= 0, "expovariate cannot be negative!");
+//		ASSERT(r >= 0, "expovariate cannot be negative!");
 		return r;
     }
 

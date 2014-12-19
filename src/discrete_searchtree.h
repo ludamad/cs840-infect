@@ -7,95 +7,31 @@
 
 #include "discrete_common.h"
 
-const double MIN_WEIGHT_TO_KEEP = 1.0e-25;
-
-// Only used in DiscreteSearchTree
+// Only used in DiscreteSplayTree
 struct DSTNode {
     double weight;
     entity_id entity;
-    // Note: Not responsible for deleting children at all.
-    DSTNode* lchild = NULL;
-    DSTNode* rchild = NULL;
+    int lchild = -1;
+    int rchild = -1;
     DSTNode(entity_id e = -1, double w = -1) {
         entity = e;
         weight = w;
     }
 
-    entity_id random_select(double r) {
-        DEBUG_CHECK(r > 0 && r < weight, "Bad random value!");
-        double wl = w(lchild);
-        if (r < wl) {
-            return lchild->random_select(r);
-        }
-        r -= wl;
-        double wr = w(rchild);
-        if (r < wr) {
-            return rchild->random_select(r);
-        }
-        // if lchild == NULL and rchild == NULL always will return entity
-        return entity;
-    }
-// How to delete?
-
-    entity_id random_remove(double r) {
-        DEBUG_CHECK(r > 0 && r < weight, "Bad random value!");
-        double wl = w(lchild);
-        if (r < wl) {
-            return lchild->random_select(r);
-        }
-        r -= wl;
-        double wr = w(rchild);
-        if (r < wr) {
-            return rchild->random_select(r);
-        }
-        // if lchild == NULL and rchild == NULL always will return entity
-        // Delete the the entity here,
-        return entity;
-    }
-
-    static DSTNode* insert(DSTNode* root, DSTNode* child) {
-    	if (root == NULL) {
-    		return child;
-    	}
-//    	ASSERT(child->lchild == NULL && child->rchild == NULL, "Nontrivial insert!");
-    	double lW = w(root->lchild), rW = w(root->rchild);
-    	double ww = root->weight - lW - rW;
-    	if (child->weight > ww) {
-    		// Swap who-is-who:
-    		std::swap(root->lchild, child->lchild);
-    		std::swap(root->rchild, child->rchild);
-    		child->weight += root->weight - ww;
-    		root->weight = ww;
-    		std::swap(root, child);
-    	} else {
-    		root->weight += child->weight;
-    	}
-    	if (lW > rW) {
-    		root->rchild = insert(root->rchild, child);
-    	} else {
-    		root->lchild = insert(root->lchild, child);
-    	}
-    	return root;
-    }
-
     void assert_relation() {
-    	ASSERT(this != lchild, "Loop!");
-    	ASSERT(this != rchild, "Loop!");
+//    	ASSERT(this != lchild, "Loop!");
+//    	ASSERT(this != rchild, "Loop!");
     	double wsum = 0;
     	if (lchild) {
-    		wsum += w(lchild);
-    		lchild->assert_relation();
+//    		wsum += w(lchild);
+//    		lchild->assert_relation();
     	}
     	if (rchild) {
-    		wsum += w(rchild);
-    		rchild->assert_relation();
+//    		wsum += w(rchild);
+//    		rchild->assert_relation();
     	}
 //    	ASSERT(fabs(weight - wsum - original) < 0.001, "Relation 1 broken!");
 //    	ASSERT(fabs(weight - expected) < 0.001, "Relation 2 broken!");
-    }
-
-    static double w(DSTNode* node) {
-        return node == NULL ? 0 : node->weight;
     }
 };
 
@@ -112,54 +48,100 @@ struct DiscreteSearchTree {
     	DSTNode* node = &buffer[last_used++];
     	node->entity = entity;
     	node->weight = weight * decay_factor;
-    	root = DSTNode::insert(root, node);
+    	root_id = insert(root_id, node);
 //    	root->assert_relation();
     }
 
     entity_id random_select(MTwist& rng) {
     	PERF_TIMER();
-        ASSERT(root != NULL && total_weight() > 0.0, "Can't do random select with 0 weight!");
-        double r = rng.rand_real_not1() * root->weight;
-        return root->random_select(r);
+        ASSERT(!nil(root_id) && total_weight() > 0.0, "Can't do random select with 0 weight!");
+        return random_select(to_node(root_id), rng.rand_real_not1() * to_node(root_id)->weight);
     }
-//
-//    entity_id random_remove(MTwist& rng) {
-//    	PERF_TIMER();
-//        ASSERT(root != NULL && total_weight() > 0.0, "Can't do random select with 0 weight!");
-//        double r = rng.rand_real_not1() * root->weight;
-//        return root->random_remove(&root, r);
-//    }
 
-    // Downscale the node, possibly reorganizing the tree
-    static void downscale(DSTNode* node, double decay) {
-        if (node == NULL) {
+    void downscale(int id, double decay) {
+        if (nil(id)) {
             return;
         }
+        auto* node = to_node(id);
+        node->weight /= decay;
         downscale(node->lchild, decay);
         downscale(node->rchild, decay);
-        node->weight /= decay;
     }
 
     void scale(double multiplier) {
         decay_factor /= multiplier;
         if (decay_factor > 1.0e100) {
-        	double decay_inv = 1/decay_factor;
         	PERF_TIMER2("SearchTree: full scale");
-//            downscale(root, decay_factor);
-        	for (auto& node : buffer) {
-        		node.weight *= decay_inv;
-        	}
+            downscale(root_id, decay_factor);
             decay_factor = 1.0;
         }
     }
+     entity_id random_select(DSTNode* N, double r) {
+        DEBUG_CHECK(r > 0 && r < N->weight, "Bad random value!");
+        double wl = w(N->lchild);
+        if (r < wl) {
+            return random_select(to_node(N->lchild), r);
+        }
+        r -= wl;
+        double wr = w(N->rchild);
+        if (r < wr) {
+        	return random_select(to_node(N->rchild), r);
+        }
+        // if lchild is empty and rchild is empty always will return entity
+        return N->entity;
+    }
+    int insert(int id, DSTNode* child) {
+    	if (id == -1) {
+    		return to_id(child);
+    	}
+    	auto* node = to_node(id);
+    	ASSERT(nil(child->lchild) && nil(child->rchild), "Nontrivial insert!");
+    	double lW = w(node->lchild), rW = w(node->rchild);
+    	double ww = node->weight - lW - rW;
+    	if (child->weight > ww) {
+    		// Swap who-is-who:
+    		std::swap(node->lchild, child->lchild);
+    		std::swap(node->rchild, child->rchild);
+    		child->weight += node->weight;
+    		node->weight = ww;
+    		std::swap(node, child);
+    		id = to_id(node);
+    	} else {
+    		node->weight += child->weight;
+    	}
+    	if (lW > rW) {
+    		node->rchild = insert(node->rchild, child);
+    	} else {
+    		node->lchild = insert(node->lchild, child);
+    	}
+    	return id;
+    }
+
     double total_weight() const {
-        return root == NULL ? 0 : root->weight / decay_factor;
+        return nil(root_id) ? 0 : to_node(root_id)->weight / decay_factor;
     }
 private:
+	static bool nil(int a) {
+		return a == -1;
+	}
+	int to_id(DSTNode* node) {
+		if (!node) {
+			return -1;
+		}
+		return (node - &buffer[0]);
+	}
+	DSTNode* to_node(int id) const {
+		return (DSTNode*)&buffer[id];
+	}
+
+    double w(int id) {
+        return id == -1 ? 0 : to_node(id)->weight;
+    }
+
     double decay_factor = 1.0;
     std::vector<DSTNode> buffer;
     int last_used = 0;
-    DSTNode* root = NULL;
+    int root_id = -1;
 };
 
 

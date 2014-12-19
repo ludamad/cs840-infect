@@ -34,6 +34,7 @@ void State::set_graph(const Graph& graph) {
 static const double HALFLIFE = 60;
 static double DECAY_MIN_INTERVAL = 0.01005033585350145 * HALFLIFE;
 static double DECAY_MULTIPLIER = 0.99;
+//static double DECAY_MULTIPLIER = 0.78;
 static double TIME_SUM_CORRECTION = 1.0/1.0005000833332613;
 static double C1 = DECAY_MIN_INTERVAL * TIME_SUM_CORRECTION;
 static double C2 = 1.0 / C1;
@@ -55,9 +56,10 @@ static bool test_if_null_step(MTwist& rng, double weight, double* delta_time) {
 	return (r > weight);
 }
 
-void State::step() {
-	PERF_TIMER();
 
+void State::step() {
+	static MilestoneRep rep;
+	PERF_TIMER();
 	entity_id infected_id; // declared here to satisfy 'goto' constraints
 	bool valid_event_occurred = false;
 	while (!valid_event_occurred) {
@@ -70,7 +72,7 @@ void State::step() {
 			}
 		}
 
-		// Find the event that occurs (an infection)
+		// Find the event that occurs (a  n infection)
 		// We employ the rejection method here if an entity would infect the same entity twice.
 		// However, if an infection occurs twice from different infectors,
 		// we simply do nothing but step time if a valid infection does not occur.
@@ -87,6 +89,7 @@ void State::step() {
 		time_interval_overage += delta_time;
 		while (time_interval_overage > DECAY_MIN_INTERVAL) {
 			active_infections.scale(DECAY_MULTIPLIER);
+			rep.report("Scale down %d\n");
 			time_interval_overage -= DECAY_MIN_INTERVAL;
 		}
 		time_elapsed += delta_time;

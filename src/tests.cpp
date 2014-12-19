@@ -7,6 +7,7 @@
 #include "discrete_bst.h"
 #include "discrete_fixedtree.h"
 #include "discrete_searchtree.h"
+#include "discrete_buckettree.h"
 
 #include "state.h"
 
@@ -124,6 +125,11 @@ TEST(discrete_searchtree_empirical) {
 	test_discrete_choice_structure<DiscreteSearchTree>();
 }
 
+TEST(discrete_buckettree_empirical) {
+	PERF_UNIT("buckettree");
+	test_discrete_choice_structure<DiscreteBucketTree>();
+}
+
 TEST(discrete_bst_empirical) {
 	PERF_UNIT("weighted bst");
 	DiscreteBST bst;
@@ -131,7 +137,7 @@ TEST(discrete_bst_empirical) {
 	    bst.insert(i,i);
 	}
 	for (int i = 1; i < 100; i++) {
-	    CHECK(bst.find(i, 0)->obj.key == i);
+	    CHECK(bst.find(i, 0)->key == i);
 	}
 	test_discrete_choice_structure<DiscreteBST>();
 }

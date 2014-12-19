@@ -7,11 +7,11 @@
 
 #include "sdl.h"
 #include "state.h"
-//#include "state_alt.h"
+#include "state_alt.h"
 
 using namespace std;
 
-//typedef StateAlt State;
+//#define State StateAlt
 
 /*****************************************************************************
  * Test driver
@@ -169,16 +169,16 @@ static void run(Config& C, State& state) {
 	PERF_TIMER();
 	output_network(C, "Initial Conditions", state);
     if (C.delay) {
-    	sdl_delay(100);
+//    	sdl_delay(100);
     }
     MilestoneRep rep;
     bool finished = false;
     while (!finished) {
-		sdl_delay(10);
+//		sdl_delay(10);
 		Timer timer;
-		double last_time = state.time_elapsed;
-		// Draw after every millisecond of simulation:
-		while (last_time + 1 > state.time_elapsed) {
+		double last_time = timer.get_microseconds();
+		// Draw after every 100 milliseconds of simulation:
+		while (last_time + 100*1000 > timer.get_microseconds()) {
 			if (state.finished(C)) {
 				finished = true;
 				break; // Done
@@ -196,7 +196,7 @@ static void run(Config& C, State& state) {
 	}
     output_network(C, "Simulation Complete", state);
     if (C.delay) {
-    	sdl_delay(1000);
+//    	sdl_delay(1000);
     }
 }
 
@@ -206,7 +206,7 @@ int main(int argn, const char** argv) {
 	}
     time_t seed;
     time(&seed);
-    seed = 2;
+    seed = 3; // Fixed for comparison purposes.
     CmdLineParser cmd(argn, argv);
     Config config(seed, Config::DEFAULT_SQRT_SIZE);
 	State state;
@@ -218,6 +218,7 @@ int main(int argn, const char** argv) {
 
 	PERF_UNIT("Network Simulation Stats");
 	int N_SIMS = 10;
+	int n_infections = 0;
 	for (int i = 0; i < N_SIMS; i++) {
 		printf("SIMULATION TRIAL (%d/%d)\n", i+1, N_SIMS);
 		if (cmd.visualize) {
@@ -225,11 +226,13 @@ int main(int argn, const char** argv) {
 			state.on_infect_func = on_infect;
 		}
 		printf("Infecting 10 random\n");
-		state.infect_n_random(10);
+		state.infect_n_random(1000);
 		output_network(config, "Initial Conditions", state);
 		run(config, state);
+		n_infections += state.n_infections;
 		printf("Simulation complete!\n");
 		state.fast_reset(config);
 	}
+	printf("Total infections = %d\n", n_infections);
 	return 0;
 }
